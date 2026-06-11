@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { ImageActions } from "./ImageActions";
 import { ImageType } from "@/types";
@@ -10,12 +10,39 @@ interface ImageCardProps {
   image: ImageType;
   index: number;
   onLike?: (imageId: string, liked: boolean) => void;
+  onDislike?: (imageId: string, disliked: boolean) => void;
   onDownload?: (imageId: string) => void;
 }
 
-export function ImageCard({ image, index, onLike, onDownload }: ImageCardProps) {
+export function ImageCard({ image, index, onLike, onDislike, onDownload }: ImageCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Auto-hide actions after 3 seconds on mobile
+  useEffect(() => {
+    if (showActions) {
+      const timer = setTimeout(() => setShowActions(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showActions]);
+
+  const handleTap = () => {
+    if (isMobile) {
+      setShowActions(!showActions);
+    }
+  };
 
   return (
     <motion.div
@@ -23,10 +50,11 @@ export function ImageCard({ image, index, onLike, onDownload }: ImageCardProps) 
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.4, delay: (index % 20) * 0.02 }}
-      whileHover={{ y: -8 }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      className="group relative overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300"
+      whileHover={!isMobile ? { y: -8 } : {}}
+      onHoverStart={() => !isMobile && setIsHovered(true)}
+      onHoverEnd={() => !isMobile && setIsHovered(false)}
+      onClick={handleTap}
+      className="relative overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer"
     >
       {/* Image Container */}
       <div className="relative aspect-square">
@@ -40,49 +68,75 @@ export function ImageCard({ image, index, onLike, onDownload }: ImageCardProps) 
           fill
           className={`object-cover transition-all duration-700 ${
             imageLoaded ? 'opacity-100' : 'opacity-0'
-          } ${isHovered ? 'scale-110' : 'scale-100'}`}
+          } ${!isMobile && isHovered ? 'scale-110' : 'scale-100'}`}
           onLoad={() => setImageLoaded(true)}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           priority={index < 4}
         />
 
-        {/* Gradient Overlay on Hover */}
+        {/* Gradient Overlay - Always visible on mobile, on hover on desktop */}
         <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: isHovered ? 1 : 0 }}
+          animate={{ 
+            opacity: (isMobile && showActions) || (!isMobile && isHovered) ? 1 : 0 
+          }}
           transition={{ duration: 0.3 }}
           className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"
         />
 
-        {/* Image Info - Bottom */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: isHovered ? 0 : 20, opacity: isHovered ? 1 : 0 }}
-          transition={{ duration: 0.3 }}
-          className="absolute bottom-0 left-0 right-0 p-4"
-        >
-          {/* Prompt Preview (if exists) */}
-          {image.prompt && (
-            <p className="mb-2 line-clamp-2 text-xs text-white/80">
-              {image.prompt.substring(0, 80)}...
-            </p>
-          )}
-          
-          {/* Action Buttons */}
-          <ImageActions
-            imageId={image.id}
-            initialLikes={image.likes}
-            onLike={(liked) => onLike?.(image.id, liked)}
-            onDownload={() => onDownload?.(image.id)}
-            isHovered={isHovered}
-          />
-        </motion.div>
+        {/* Actions Container */}
+        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+          <AnimatePresence>
+            {((!isMobile && isHovered) || (isMobile && showActions)) && (
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 20, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {/* Prompt Preview */}
+                {image.prompt && (
+                  <p className="mb-2 line-clamp-2 text-[10px] sm:text-xs text-white/80">
+                    {image.prompt.substring(0, 60)}...
+                  </p>
+                )}
+                
+                {/* Action Buttons - NOW WITH imageUrl PROP */}
+                <ImageActions
+                  imageId={image.id}
+                  imageUrl={image.url}  // ← Pass the image URL here
+                  initialLikes={image.likes}
+                  onLike={(liked) => onLike?.(image.id, liked)}
+                  onDislike={(disliked) => onDislike?.(image.id, disliked)}
+                  onDownload={() => onDownload?.(image.id)}
+                  isMobile={isMobile}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {/* Stats Badge - Top Right */}
+          {/* Mobile Hint */}
+          {isMobile && !showActions && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex justify-center"
+            >
+              <div className="rounded-full bg-black/50 px-3 py-1 text-[10px] text-white backdrop-blur-sm">
+                👆 Tap for actions
+              </div>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Stats Badge */}
         <motion.div
           initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: isHovered ? 1 : 0, x: isHovered ? 0 : 10 }}
-          className="absolute top-3 right-3 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm"
+          animate={{ 
+            opacity: (isMobile || isHovered) ? 1 : 0,
+            x: (isMobile || isHovered) ? 0 : 10
+          }}
+          className="absolute top-2 right-2 sm:top-3 sm:right-3 rounded-full bg-black/50 px-1.5 py-0.5 sm:px-2 sm:py-1 text-[10px] sm:text-xs text-white backdrop-blur-sm"
         >
           👁️ {image.views.toLocaleString()}
         </motion.div>
