@@ -1,100 +1,105 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles, Image, Zap, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { YellowStars } from "./YellowStars";
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden px-4 py-16 sm:py-24 lg:py-32">
-      {/* Animated Background Gradient */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-purple-950/20 dark:via-black dark:to-pink-950/20" />
+    <section className="relative min-h-[90vh] overflow-hidden bg-black">
+      {/* Yellow Starfield Background */}
+      <YellowStars />
       
-      {/* Animated Blobs */}
-      <motion.div
-        animate={{
-          x: [0, 100, 0],
-          y: [0, -50, 0],
-        }}
-        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-purple-300/20 dark:bg-purple-500/10 blur-3xl"
-      />
-      <motion.div
-        animate={{
-          x: [0, -100, 0],
-          y: [0, 50, 0],
-        }}
-        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-        className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-pink-300/20 dark:bg-pink-500/10 blur-3xl"
-      />
-
-      <div className="mx-auto max-w-7xl">
-        {/* Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8 flex justify-center"
-        >
-          <span className="inline-flex items-center gap-2 rounded-full bg-gray-100 dark:bg-gray-800 px-4 py-2 text-sm font-medium">
-            <Sparkles className="h-4 w-4 text-purple-500" />
-            Discover AI Art
-            <Zap className="h-4 w-4 text-yellow-500" />
-          </span>
-        </motion.div>
-
-        {/* Main Heading */}
+      {/* Subtle gradient overlay for depth - matching header */}
+      <div className="absolute inset-0 bg-gradient-to-b from-yellow-500/5 via-black/0 to-black/80" />
+      
+      <div className="relative z-10 flex min-h-[90vh] flex-col items-center justify-center px-4 text-center">
+        {/* Logo */}
         <motion.h1
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-center text-5xl font-bold tracking-tight sm:text-7xl lg:text-8xl"
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="logo font-bold tracking-tight text-white"
+          style={{
+            fontSize: "clamp(4rem, 15vw, 8rem)",
+            fontFamily: "inherit",
+          }}
         >
-          <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 bg-clip-text text-transparent">
-            Yelloi
-          </span>
+          YELL
+          <motion.span
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, duration: 0.5, type: "spring" }}
+            className="text-yellow-400 inline-block"
+            style={{
+              textShadow: "0 0 40px rgba(234, 179, 8, 0.3), 0 0 80px rgba(234, 179, 8, 0.1)",
+            }}
+          >
+            O
+          </motion.span>
+          I
         </motion.h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="mx-auto mt-6 max-w-2xl text-center text-lg text-gray-600 dark:text-gray-400 sm:text-xl"
-        >
-          Discover thousands of stunning AI-generated images. Get inspired by the best prompts for Midjourney, Flux, DALL-E, and more.
-        </motion.p>
-
-        {/* Stats */}
+        {/* Description */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="mx-auto mt-12 flex max-w-md flex-wrap justify-center gap-8"
+          transition={{ delay: 0.4, duration: 0.6 }}
+          className="mt-6 max-w-2xl"
         >
-          {[
-            { label: "AI Images", value: "30,000+", icon: Image },
-            { label: "Daily Updates", value: "100+", icon: Sparkles },
-            { label: "Free Access", value: "100%", icon: Zap },
-          ].map((stat, idx) => (
-            <div key={stat.label} className="text-center">
-              <stat.icon className="mx-auto mb-2 h-6 w-6 text-purple-500" />
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">{stat.label}</div>
-            </div>
-          ))}
+          <h2 className="text-2xl font-semibold text-white sm:text-3xl">
+            Explore Stunning AI Art
+          </h2>
+          <p className="mt-3 text-sm text-gray-400 sm:text-base">
+            Scroll through thousands of AI-generated images. Like your favorites and download for inspiration.
+          </p>
         </motion.div>
 
-        {/* Scroll Indicator */}
+        {/* Animated loading text */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 1 }}
-          className="absolute bottom-8 left-1/2 hidden -translate-x-1/2 transform lg:block"
+          transition={{ delay: 0.6, duration: 0.5 }}
+          className="mt-8 flex items-center gap-2 text-xs text-gray-500"
         >
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
+          <motion.span
+            animate={{ opacity: [0.3, 1, 0.3] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
           >
-            <ArrowRight className="h-6 w-6 rotate-90 text-gray-400" />
+            Discovering more visuals
+          </motion.span>
+          <motion.span
+            animate={{ opacity: [0, 1, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
+          >
+            .
+          </motion.span>
+          <motion.span
+            animate={{ opacity: [0, 1, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
+          >
+            .
+          </motion.span>
+          <motion.span
+            animate={{ opacity: [0, 1, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
+          >
+            .
+          </motion.span>
+        </motion.div>
+
+        {/* Scroll indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.9, duration: 0.8 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        >
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <ArrowRight className="h-5 w-5 rotate-90 text-yellow-400/50" />
           </motion.div>
         </motion.div>
       </div>

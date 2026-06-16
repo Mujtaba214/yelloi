@@ -10,21 +10,26 @@ import { ImageType } from "@/types";
 import useLocalStorage from "../../hooks/useLocalStorage";
 
 export function ImageGrid() {
-  const [images, setImages] = useState<ImageType[]>(SAMPLE_IMAGES.slice(0, ITEMS_PER_PAGE));
+  const [images, setImages] = useState<ImageType[]>(
+    SAMPLE_IMAGES.slice(0, ITEMS_PER_PAGE),
+  );
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [interactions, setInteractions] = useLocalStorage('yelloi-interactions', {});
+  const [interactions, setInteractions] = useLocalStorage(
+    "yelloi-interactions",
+    {},
+  );
 
   const loadMore = useCallback(async () => {
     await new Promise((resolve) => setTimeout(resolve, 500));
-    
+
     const nextPage = page + 1;
     const start = (nextPage - 1) * ITEMS_PER_PAGE;
     const end = start + ITEMS_PER_PAGE;
     const newImages = SAMPLE_IMAGES.slice(start, end);
-    
+
     if (newImages.length > 0) {
-      setImages(prev => [...prev, ...newImages]);
+      setImages((prev) => [...prev, ...newImages]);
       setPage(nextPage);
     } else {
       setHasMore(false);
@@ -34,19 +39,21 @@ export function ImageGrid() {
   const { loaderRef, loading } = useInfiniteScroll({ loadMore, hasMore });
 
   const handleLike = (imageId: string, liked: boolean) => {
-    setImages(prev => prev.map(img => 
-      img.id === imageId 
-        ? { ...img, likes: liked ? img.likes + 1 : img.likes - 1 }
-        : img
-    ));
+    setImages((prev) =>
+      prev.map((img) =>
+        img.id === imageId
+          ? { ...img, likes: liked ? img.likes + 1 : img.likes - 1 }
+          : img,
+      ),
+    );
   };
 
   const handleDownload = (imageId: string) => {
-    setImages(prev => prev.map(img => 
-      img.id === imageId 
-        ? { ...img, downloads: img.downloads + 1 }
-        : img
-    ));
+    setImages((prev) =>
+      prev.map((img) =>
+        img.id === imageId ? { ...img, downloads: img.downloads + 1 } : img,
+      ),
+    );
   };
 
   return (
@@ -63,17 +70,17 @@ export function ImageGrid() {
             initial={{ scale: 0 }}
             whileInView={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200 }}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-100 to-pink-100 px-4 py-2 text-sm font-medium text-purple-700 dark:from-purple-900/30 dark:to-pink-900/30 dark:text-purple-400"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-400/20 to-yellow-600/20 px-4 py-2 text-sm font-medium text-yellow-300 backdrop-blur-sm border border-yellow-500/20 dark:from-yellow-400/20 dark:to-yellow-600/20 dark:text-white"
           >
             🎨 AI Art Gallery
           </motion.div>
-          
-          <h2 className="mt-6 text-3xl font-bold sm:text-4xl">
-            Explore Stunning AI Art
-          </h2>
-          <p className="mt-4 text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Scroll through thousands of AI-generated images. Like your favorites and download for inspiration.
-          </p>
+
+          {/* <h2 className="mt-6 text-3xl font-bold sm:text-4xl">
+              Explore Stunning AI Art
+            </h2>
+            <p className="mt-4 text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              Scroll through thousands of AI-generated images. Like your favorites and download for inspiration.
+            </p> */}
         </motion.div>
 
         {/* Image Grid - Responsive: 1 (mobile) → 4 (desktop) */}
@@ -100,11 +107,13 @@ export function ImageGrid() {
               </div>
               <div className="flex items-center gap-3 mt-4">
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
-                <span className="text-sm text-gray-500">Loading more AI art...</span>
+                <span className="text-sm text-gray-500">
+                  Loading more AI art...
+                </span>
               </div>
             </div>
           )}
-          
+
           {!hasMore && !loading && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -112,8 +121,12 @@ export function ImageGrid() {
               className="text-center"
             >
               <div className="text-4xl mb-3">✨</div>
-              <p className="text-gray-400">You've reached the end of our gallery</p>
-              <p className="text-sm text-gray-500 mt-1">Check back daily for new AI art!</p>
+              <p className="text-gray-400">
+                You've reached the end of our gallery
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                Check back daily for new AI art!
+              </p>
             </motion.div>
           )}
         </div>

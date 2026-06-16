@@ -7,10 +7,10 @@ import { Header } from "@/components/ui/Header";
 
 export default function Home() {
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-black">
       <Header />
-      <div className="pt-16">
-        <HeroSection />
+      <HeroSection />
+      <div className="bg-white dark:bg-black">
         <ImageGrid />
         <Footer />
       </div>
