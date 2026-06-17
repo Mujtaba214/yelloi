@@ -66,14 +66,14 @@ export function ImageGrid() {
           viewport={{ once: true }}
           className="mb-12 text-center"
         >
-          <motion.div
+          {/* <motion.div
             initial={{ scale: 0 }}
             whileInView={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200 }}
             className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-400/20 to-yellow-600/20 px-4 py-2 text-sm font-medium text-yellow-300 backdrop-blur-sm border border-yellow-500/20 dark:from-yellow-400/20 dark:to-yellow-600/20 dark:text-white"
           >
             🎨 AI Art Gallery
-          </motion.div>
+          </motion.div> */}
 
           {/* <h2 className="mt-6 text-3xl font-bold sm:text-4xl">
               Explore Stunning AI Art

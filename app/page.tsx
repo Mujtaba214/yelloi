@@ -8,7 +8,7 @@ import { Header } from "@/components/ui/Header";
 export default function Home() {
   return (
     <main className="min-h-screen bg-black">
-      <Header />
+      {/* <Header /> */}
       <HeroSection />
       <div className="bg-white dark:bg-black">
         <ImageGrid />
