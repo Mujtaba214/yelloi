@@ -1,20 +1,23 @@
+// app/(admin)/admin/analytics/page.tsx
 import { Suspense } from 'react';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { StatsCards } from '@/components/admin/StatsCards';
 import { VisitorChart } from '@/components/admin/VisitorChart';
 import { TopImagesTable } from '@/components/admin/TopImagesTable';
-import { getAnalyticsOverview, getDailyAnalytics, getTopImages } from '@/lib/db/queries';
+import { 
+  getAnalyticsOverview, 
+  getDailyAnalytics, 
+  getTopImages 
+} from '@/lib/db/queries';
 
 export const revalidate = 60;
 
 export default async function AnalyticsPage() {
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - 30);
-
+  // 🔥 No arguments needed
   const [overview, dailyData, topImages] = await Promise.all([
-    getAnalyticsOverview(startDate),
-    getDailyAnalytics(startDate),
-    getTopImages(startDate, 20),
+    getAnalyticsOverview(),
+    getDailyAnalytics(),
+    getTopImages(20),
   ]);
 
   return (

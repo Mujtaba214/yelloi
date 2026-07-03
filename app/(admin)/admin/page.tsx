@@ -12,10 +12,10 @@ import {
   getRecentActivity 
 } from '@/lib/db/queries';
 
-export const revalidate = 10; // Refresh every 10 seconds for testing
+export const revalidate = 60;
 
 export default async function AdminDashboard() {
-  // Get ALL data (no date filter for now)
+  // 🔥 No arguments needed anymore
   const [overview, dailyData, topImages, recentActivity] = await Promise.all([
     getAnalyticsOverview(),
     getDailyAnalytics(),

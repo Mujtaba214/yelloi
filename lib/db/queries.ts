@@ -1,7 +1,6 @@
 // lib/db/queries.ts
 import { supabaseAdmin } from './index';
 
-// Remove date filtering for testing
 export async function getAnalyticsOverview() {
   try {
     // Get ALL visitors (no date filter)
@@ -24,20 +23,24 @@ export async function getAnalyticsOverview() {
       .from('image_interactions')
       .select('interaction_type');
 
+    // 🔥 Ensure all values are numbers
     const likes = interactions?.filter(i => i.interaction_type === 'like').length || 0;
     const downloads = interactions?.filter(i => i.interaction_type === 'download').length || 0;
     const shares = interactions?.filter(i => i.interaction_type === 'share').length || 0;
     const dislikes = interactions?.filter(i => i.interaction_type === 'dislike').length || 0;
 
     const totalEngagement = likes + downloads + shares;
-    const engagementRate = totalVisitors > 0 
-      ? ((totalEngagement / totalVisitors) * 100).toFixed(1) 
+    
+    // 🔥 Fix: Ensure totalVisitors is a number and handle division safely
+    const visitorCount = Number(totalVisitors) || 0;
+    const engagementRate = visitorCount > 0 
+      ? ((totalEngagement / visitorCount) * 100).toFixed(1) 
       : '0';
 
     console.log('📊 Dashboard data:', {
-      totalVisitors,
-      totalPageViews,
-      totalImageViews,
+      totalVisitors: visitorCount,
+      totalPageViews: Number(totalPageViews) || 0,
+      totalImageViews: Number(totalImageViews) || 0,
       likes,
       downloads,
       shares,
@@ -45,9 +48,9 @@ export async function getAnalyticsOverview() {
     });
 
     return {
-      totalVisitors: totalVisitors || 0,
-      totalPageViews: totalPageViews || 0,
-      totalImageViews: totalImageViews || 0,
+      totalVisitors: visitorCount,
+      totalPageViews: Number(totalPageViews) || 0,
+      totalImageViews: Number(totalImageViews) || 0,
       totalLikes: likes,
       totalDownloads: downloads,
       totalShares: shares,
@@ -67,7 +70,6 @@ export async function getAnalyticsOverview() {
   }
 }
 
-// For the chart
 export async function getDailyAnalytics() {
   try {
     const { data } = await supabaseAdmin
@@ -83,7 +85,6 @@ export async function getDailyAnalytics() {
   }
 }
 
-// For top images
 export async function getTopImages(limit: number = 10) {
   try {
     const { data: interactions } = await supabaseAdmin
@@ -114,8 +115,10 @@ export async function getTopImages(limit: number = 10) {
     return Object.entries(imageStats)
       .map(([imageId, stats]) => ({
         imageId,
-        ...stats,
-        totalEngagement: stats.likes + stats.downloads + stats.views,
+        likes: stats.likes || 0,
+        downloads: stats.downloads || 0,
+        views: stats.views || 0,
+        totalEngagement: (stats.likes || 0) + (stats.downloads || 0) + (stats.views || 0),
       }))
       .sort((a, b) => b.totalEngagement - a.totalEngagement)
       .slice(0, limit);
