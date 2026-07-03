@@ -6,19 +6,59 @@ import { ImageCard } from "@/components/gallery/ImageCard";
 import { Heart, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import useLocalStorage from "@/hooks/useLocalStorage";
-import { SAMPLE_IMAGES } from "@/lib/utils/constants";
+import { ImageType } from "@/types";
 
 export default function LikedPage() {
-  const [interactions] = useLocalStorage<Record<string, { liked: boolean }>>('yelloi-interactions', {});
-  const [likedImages, setLikedImages] = useState<(typeof SAMPLE_IMAGES)[number][]>([]);
+  const [interactions] = useLocalStorage<Record<string, { liked: boolean }>>(
+    'yelloi-interactions', 
+    {}
+  );
+  const [likedImages, setLikedImages] = useState<ImageType[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  // Fetch all images and filter liked ones
   useEffect(() => {
-    const likedIds = Object.entries(interactions)
-      .filter(([_, value]) => value.liked)
-      .map(([id]) => id);
-    
-    const images = SAMPLE_IMAGES.filter(img => likedIds.includes(img.id));
-    setLikedImages(images);
+    const fetchLikedImages = async () => {
+      try {
+        setLoading(true);
+        
+        // Get all image IDs that are liked
+        const likedIds = Object.entries(interactions)
+          .filter(([_, value]) => value.liked)
+          .map(([id]) => id);
+
+        if (likedIds.length === 0) {
+          setLikedImages([]);
+          setLoading(false);
+          return;
+        }
+
+        // Fetch images from Cloudinary API
+        const response = await fetch('/api/images', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            limit: 500, // Get enough images to cover likes
+            cursor: undefined,
+          }),
+        });
+
+        const data = await response.json();
+        
+        // Filter only liked images
+        const filtered = data.images.filter((img: ImageType) => 
+          likedIds.includes(img.id)
+        );
+        
+        setLikedImages(filtered);
+      } catch (error) {
+        console.error('Error fetching liked images:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLikedImages();
   }, [interactions]);
 
   return (
@@ -46,14 +86,30 @@ export default function LikedPage() {
           </div>
         </motion.div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex justify-center py-20">
+            <div className="flex flex-col items-center gap-3">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-yellow-400 border-t-transparent" />
+              <p className="text-sm text-gray-500">Loading your liked images...</p>
+            </div>
+          </div>
+        )}
+
         {/* Grid */}
-        {likedImages.length > 0 ? (
+        {!loading && likedImages.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {likedImages.map((image, idx) => (
-              <ImageCard key={image.id} image={image} index={idx} />
+              <ImageCard 
+                key={image.id} 
+                image={image} 
+                index={idx}
+                onLike={() => {}} 
+                onDownload={() => {}}
+              />
             ))}
           </div>
-        ) : (
+        ) : !loading && likedImages.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -65,12 +121,12 @@ export default function LikedPage() {
               Start liking images and they'll appear here
             </p>
             <Link href="/">
-              <button className="mt-6 rounded-full bg-purple-600 px-6 py-2 text-white hover:bg-purple-700 transition-colors">
+              <button className="mt-6 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-500 px-6 py-2 text-black font-medium hover:from-yellow-500 hover:to-yellow-600 transition-colors">
                 Explore Gallery
               </button>
             </Link>
           </motion.div>
-        )}
+        ) : null}
       </div>
     </main>
   );

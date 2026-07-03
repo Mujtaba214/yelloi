@@ -10,7 +10,7 @@ import { trackImageView } from "@/lib/analytics/tracking";
 interface ImageCardProps {
   image: ImageType;
   index: number;
-  onLike?: (imageId: string, liked: boolean) => void;
+  onLike?: (imageId: string, liked: boolean) => void;  // ← Optional
   onDislike?: (imageId: string, disliked: boolean) => void;
   onDownload?: (imageId: string) => void;
   onClick?: () => void;
