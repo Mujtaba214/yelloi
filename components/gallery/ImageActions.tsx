@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, ThumbsDown, Download, Check, Share2 } from "lucide-react";
 import useLocalStorage from "@/hooks/useLocalStorage";
+import { trackInteraction } from "@/lib/analytics/tracking";
 
 interface ImageActionsProps {
   imageId: string;
-  imageUrl?: string;  // Add this prop
+  imageUrl?: string;
   initialLikes: number;
   onLike?: (liked: boolean) => void;
   onDislike?: (disliked: boolean) => void;
@@ -37,7 +38,7 @@ export function ImageActions({
   const isLiked = userInteraction?.liked || false;
   const isDisliked = userInteraction?.disliked || false;
 
-  const handleLike = (e?: React.MouseEvent | React.TouchEvent) => {
+  const handleLike = async (e?: React.MouseEvent | React.TouchEvent) => {
     e?.stopPropagation();
     
     const newLiked = !isLiked;
@@ -51,14 +52,23 @@ export function ImageActions({
     setLikes(prev => newLiked ? prev + 1 : prev - 1);
     onLike?.(newLiked);
     
+    // 🔥 ONLY TRACK WHEN USER IS LIKING (NOT UNLIKING)
     if (newLiked) {
+      console.log('❤️ Tracking like for image:', imageId);
+      await trackInteraction(imageId, 'like');
       setCheckMessage('Liked! ❤️');
+      setShowCheck(true);
+      setTimeout(() => setShowCheck(false), 1500);
+    } else {
+      // User unliked - don't track, just show a message
+      console.log('💔 User unliked image:', imageId);
+      setCheckMessage('Unliked 💔');
       setShowCheck(true);
       setTimeout(() => setShowCheck(false), 1500);
     }
   };
 
-  const handleDislike = (e?: React.MouseEvent | React.TouchEvent) => {
+  const handleDislike = async (e?: React.MouseEvent | React.TouchEvent) => {
     e?.stopPropagation();
     
     const newDisliked = !isDisliked;
@@ -74,94 +84,73 @@ export function ImageActions({
     }
     onDislike?.(newDisliked);
     
+    // 🔥 ONLY TRACK WHEN USER IS DISLIKING (NOT UNDISLIKING)
     if (newDisliked) {
+      console.log('👎 Tracking dislike for image:', imageId);
+      await trackInteraction(imageId, 'dislike');
       setCheckMessage('Noted 👎');
       setShowCheck(true);
       setTimeout(() => setShowCheck(false), 1500);
-    }
-  };
-
-  // Actual download function
-  const downloadImage = async (url: string, filename: string) => {
-    try {
-      setIsDownloading(true);
-      
-      // Method 1: Using fetch + blob (works for cross-origin images)
-      const response = await fetch(url);
-      const blob = await response.blob();
-      
-      // Create blob URL
-      const blobUrl = window.URL.createObjectURL(blob);
-      
-      // Create anchor element
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = filename;
-      
-      // Append to body, click, and remove
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // Clean up blob URL
-      window.URL.revokeObjectURL(blobUrl);
-      
-      setCheckMessage('Downloaded! 📥');
+    } else {
+      console.log('👍 User removed dislike for image:', imageId);
+      setCheckMessage('Dislike removed 👍');
       setShowCheck(true);
       setTimeout(() => setShowCheck(false), 1500);
-      
-      onDownload?.();
-      
-    } catch (error) {
-      console.error('Download failed:', error);
-      
-      // Fallback: Open in new tab
-      window.open(url, '_blank');
-      setCheckMessage('Opening in new tab 🔗');
-      setShowCheck(true);
-      setTimeout(() => setShowCheck(false), 1500);
-    } finally {
-      setIsDownloading(false);
     }
   };
 
   const handleDownload = async (e?: React.MouseEvent | React.TouchEvent) => {
     e?.stopPropagation();
     
-    if (!imageUrl) {
-      console.error('No image URL provided');
-      setCheckMessage('Error downloading ❌');
+    if (!imageUrl) return;
+    
+    // 🔥 TRACK DOWNLOAD (always counts as a download)
+    console.log('📥 Tracking download for image:', imageId);
+    await trackInteraction(imageId, 'download');
+    
+    setIsDownloading(true);
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `yelloi-${imageId}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+      
+      setCheckMessage('Downloaded! 📥');
       setShowCheck(true);
       setTimeout(() => setShowCheck(false), 1500);
-      return;
+      onDownload?.();
+    } catch (error) {
+      console.error('Download error:', error);
+      window.open(imageUrl, '_blank');
+    } finally {
+      setIsDownloading(false);
     }
-    
-    // Generate filename from image ID and timestamp
-    const filename = `yelloi-${imageId}-${Date.now()}.jpg`;
-    
-    await downloadImage(imageUrl, filename);
   };
 
   const handleShare = async (e?: React.MouseEvent | React.TouchEvent) => {
     e?.stopPropagation();
     
-    const shareData = {
-      title: 'Yelloi - AI Art',
-      text: 'Check out this amazing AI-generated image!',
-      url: window.location.href,
-    };
+    // 🔥 TRACK SHARE (always counts as a share)
+    console.log('🔗 Tracking share for image:', imageId);
+    await trackInteraction(imageId, 'share');
     
     if (navigator.share && isMobile) {
       try {
-        await navigator.share(shareData);
-        setCheckMessage('Shared! ✨');
-        setShowCheck(true);
-        setTimeout(() => setShowCheck(false), 1500);
+        await navigator.share({
+          title: 'Yelloi - AI Art',
+          text: 'Check out this amazing AI-generated image!',
+          url: window.location.href,
+        });
       } catch (err) {
         console.log('Share cancelled');
       }
     } else {
-      // Fallback - copy to clipboard
       navigator.clipboard.writeText(window.location.href);
       setCheckMessage('Link copied! 🔗');
       setShowCheck(true);
@@ -169,19 +158,16 @@ export function ImageActions({
     }
   };
 
-  // Larger touch targets for mobile
   const buttonSize = isMobile ? 'p-2.5' : 'p-1.5';
   const iconSize = isMobile ? 'h-5 w-5' : 'h-3.5 w-3.5';
 
   return (
     <div className="relative flex items-center justify-between">
       <div className="flex items-center gap-2 sm:gap-1">
-        {/* Like Button */}
         <motion.button
           whileTap={{ scale: 0.85 }}
           whileHover={!isMobile ? { scale: 1.1 } : {}}
           onClick={handleLike}
-          disabled={isDownloading}
           className={`relative flex items-center gap-1.5 rounded-full px-3 sm:px-3 py-1.5 sm:py-1.5 text-sm font-medium transition-all touch-manipulation ${
             isLiked
               ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
@@ -198,12 +184,10 @@ export function ImageActions({
           <span className="sm:hidden text-xs ml-0.5">{likes}</span>
         </motion.button>
 
-        {/* Dislike Button */}
         <motion.button
           whileTap={{ scale: 0.85 }}
           whileHover={!isMobile ? { scale: 1.1 } : {}}
           onClick={handleDislike}
-          disabled={isDownloading}
           className={`rounded-full ${buttonSize} transition-all touch-manipulation ${
             isDisliked
               ? 'bg-blue-500 text-white'
@@ -213,7 +197,6 @@ export function ImageActions({
           <ThumbsDown className={`${iconSize} ${isDisliked ? 'fill-white' : ''}`} />
         </motion.button>
 
-        {/* Download Button - Now with loading state */}
         <motion.button
           whileTap={{ scale: 0.85 }}
           whileHover={!isMobile ? { scale: 1.1 } : {}}
@@ -224,13 +207,12 @@ export function ImageActions({
           }`}
         >
           {isDownloading ? (
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            <div className={`${iconSize} animate-spin rounded-full border-2 border-white border-t-transparent`} />
           ) : (
             <Download className={iconSize} />
           )}
         </motion.button>
 
-        {/* Share Button */}
         <motion.button
           whileTap={{ scale: 0.85 }}
           whileHover={!isMobile ? { scale: 1.1 } : {}}
@@ -241,14 +223,20 @@ export function ImageActions({
         </motion.button>
       </div>
 
-      {/* Success Toast Message */}
       <AnimatePresence>
         {showCheck && (
           <motion.div
             initial={{ opacity: 0, scale: 0.5, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.5 }}
-            className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-green-500 px-3 py-1.5 text-xs font-medium text-white shadow-lg z-50"
+            className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium text-white shadow-lg z-50"
+            style={{
+              backgroundColor: checkMessage.includes('❤️') || checkMessage.includes('👍') 
+                ? '#22c55e'  // green
+                : checkMessage.includes('💔') || checkMessage.includes('👎')
+                ? '#ef4444'  // red
+                : '#22c55e'  // default green
+            }}
           >
             {checkMessage}
           </motion.div>

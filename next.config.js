@@ -5,11 +5,21 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'picsum.photos',
         port: '',
-        pathname: '/**', // Allows all paths from picsum.photos
+        pathname: '/**',
       },
     ],
+  },
+  // 🔥 Allow environment variables to be loaded
+  env: {
+    NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   },
 };
 
