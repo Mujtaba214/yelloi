@@ -1,5 +1,6 @@
 "use client";
 
+import { Footer } from "@/components/ui/Footer";
 import { motion } from "framer-motion";
 import { Sparkles, Image, Zap, Users, Heart, Shield } from "lucide-react";
 import Link from "next/link";
@@ -124,7 +125,7 @@ export default function AboutPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="text-center pt-4"
+            className="text-center pt-4 pb-12"
           >
             <Link
               href="/"
@@ -135,6 +136,7 @@ export default function AboutPage() {
           </motion.div>
         </div>
       </div>
+      <Footer />
     </main>
   );
 }

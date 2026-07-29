@@ -1,5 +1,6 @@
 "use client";
 
+import { Footer } from "@/components/ui/Footer";
 import { motion } from "framer-motion";
 import { Shield, Lock, Eye, Database, Mail, Cookie } from "lucide-react";
 import Link from "next/link";
@@ -140,7 +141,7 @@ export default function PrivacyPage() {
           </motion.div>
 
           {/* Contact */}
-          <motion.div
+          {/* <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.35 }}
@@ -160,14 +161,14 @@ export default function PrivacyPage() {
                 privacy@yelloi.com
               </a>
             </p>
-          </motion.div>
+          </motion.div> */}
 
           {/* Back Link */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="text-center pt-4"
+            className="text-center pt-4 pb-12"
           >
             <Link
               href="/"
@@ -178,6 +179,7 @@ export default function PrivacyPage() {
           </motion.div>
         </div>
       </div>
+      <Footer />
     </main>
   );
 }

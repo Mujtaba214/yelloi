@@ -117,7 +117,7 @@ export default function LikedPage() {
               Start liking images and they'll appear here
             </p>
             <Link href="/">
-              <button className="mt-6 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-500 px-6 py-2 text-black font-medium hover:from-yellow-500 hover:to-yellow-600 transition-colors">
+              <button className="mt-6 rounded-full bg-linear-to-r from-yellow-400 to-yellow-500 px-6 py-2 text-black font-medium hover:from-yellow-500 hover:to-yellow-600 transition-colors">
                 Explore Gallery
               </button>
             </Link>

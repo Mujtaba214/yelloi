@@ -7,7 +7,7 @@ import Link from "next/link";
 export function Footer() {
   return (
     <footer className="border-t border-gray-200 dark:border-gray-800">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 pt-10  sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
           {/* Copyright */}
           <motion.div
@@ -54,7 +54,7 @@ export function Footer() {
           >
             Made with
             <Heart className="h-4 w-4 text-red-500" />
-            for AI art lovers
+            for Art lovers
           </motion.div>
         </div>
       </div>

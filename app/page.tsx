@@ -2,15 +2,23 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Heart, Download, Scroll, Shield, ArrowRight } from "lucide-react";
-import UserPage from "./(user)/page"; 
+import {
+  Sparkles,
+  Heart,
+  Download,
+  Scroll,
+  Shield,
+  ArrowRight,
+} from "lucide-react";
+import UserPage from "./(user)/page";
+
 export default function AgeGate() {
   const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const verified = sessionStorage.getItem('yelloi_age_verified');
-    if (verified === 'true') {
+    const verified = sessionStorage.getItem("yelloi_age_verified");
+    if (verified === "true") {
       setIsVerified(true);
     }
   }, []);
@@ -18,10 +26,10 @@ export default function AgeGate() {
   const handleEnter = () => {
     setIsLoading(true);
     setTimeout(() => {
-      sessionStorage.setItem('yelloi_age_verified', 'true');
+      sessionStorage.setItem("yelloi_age_verified", "true");
       setIsVerified(true);
       setIsLoading(false);
-    }, 800);
+    }, 400);
   };
 
   if (isVerified) {
@@ -29,13 +37,14 @@ export default function AgeGate() {
   }
 
   return (
-    <main className="min-h-screen bg-[#050505] flex items-center justify-center px-4 relative overflow-hidden">
+    <main className="min-h-screen bg-[#050505] flex items-center justify-center px-4 relative overflow-hidden pt-8">
       {/* Background Glow */}
       <div className="absolute inset-0 pointer-events-none">
-        <div 
-          className="absolute w-[700px] h-[700px] left-1/2 top-[-300px] -translate-x-1/2"
+        <div
+          className="absolute w-175 h-175 left-1/2 -top-75 -translate-x-1/2"
           style={{
-            background: "radial-gradient(circle, rgba(255,216,77,0.15), transparent 70%)",
+            background:
+              "radial-gradient(circle, rgba(255,216,77,0.15), transparent 70%)",
           }}
         />
       </div>
@@ -47,8 +56,12 @@ export default function AgeGate() {
             key={i}
             className="absolute w-1 h-1 rounded-full bg-yellow-400/30"
             initial={{
-              x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000),
-              y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1000),
+              x:
+                Math.random() *
+                (typeof window !== "undefined" ? window.innerWidth : 1000),
+              y:
+                Math.random() *
+                (typeof window !== "undefined" ? window.innerHeight : 1000),
               opacity: 0.2 + Math.random() * 0.5,
               scale: 0.5 + Math.random() * 1,
             }}
@@ -74,14 +87,14 @@ export default function AgeGate() {
         {/* Logo */}
         <div className="text-center mb-8">
           <motion.div
-            animate={{ 
+            animate={{
               rotate: [0, 5, -5, 0],
               scale: [1, 1.05, 1],
             }}
-            transition={{ 
+            transition={{
               duration: 4,
               repeat: Infinity,
-              ease: "easeInOut"
+              ease: "easeInOut",
             }}
             className="text-5xl mb-3"
           >
@@ -117,8 +130,8 @@ export default function AgeGate() {
               Welcome to Yelloi <span className="text-yellow-400">🥰</span>
             </p>
             <p className="text-gray-400 text-xs leading-relaxed mt-2">
-              This site contains AI images that may be considered 
-              <span className="text-yellow-400/80"> 18+</span> or 
+              This site contains AI images that may be considered
+              <span className="text-yellow-400/80"> 18+</span> or
               <span className="text-yellow-400/80"> vector-themed</span>.
             </p>
           </div>
@@ -126,8 +139,12 @@ export default function AgeGate() {
           {/* Confirmation */}
           <div className="bg-[rgba(255,255,255,0.03)] rounded-xl p-4 mb-6 border border-[rgba(255,255,255,0.05)]">
             <p className="text-center text-xs text-gray-400">
-              By entering, you confirm you are 
-              <span className="text-yellow-400 font-semibold"> 18 or older</span>.
+              By entering, you confirm you are
+              <span className="text-yellow-400 font-semibold">
+                {" "}
+                18 or older
+              </span>
+              .
             </p>
           </div>
 
@@ -166,7 +183,7 @@ export default function AgeGate() {
             whileTap={{ scale: 0.98 }}
             onClick={handleEnter}
             disabled={isLoading}
-            className="w-full py-3.5 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-semibold text-sm flex items-center justify-center gap-2 transition-all hover:from-yellow-500 hover:to-yellow-600 disabled:opacity-70"
+            className="w-full py-3.5 rounded-full bg-linear-to-r from-yellow-400 to-yellow-500 text-black font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all hover:from-yellow-500 hover:to-yellow-600 disabled:opacity-70"
           >
             {isLoading ? (
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-black/30 border-t-transparent" />
@@ -178,10 +195,6 @@ export default function AgeGate() {
             )}
           </motion.button>
 
-          {/* Footer */}
-          <p className="text-[10px] text-gray-600 text-center mt-4">
-            Fast. Simple. Endless. ✦
-          </p>
         </motion.div>
 
         {/* Animated Pulse Ring */}
@@ -197,11 +210,11 @@ export default function AgeGate() {
           }}
           className="absolute inset-0 -z-10 rounded-full border border-yellow-400/10"
           style={{
-            top: '50%',
-            left: '50%',
-            width: '120%',
-            height: '120%',
-            transform: 'translate(-50%, -50%)',
+            top: "50%",
+            left: "50%",
+            width: "120%",
+            height: "120%",
+            transform: "translate(-50%, -50%)",
           }}
         />
       </motion.div>
