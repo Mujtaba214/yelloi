@@ -112,7 +112,7 @@ export function ImageGrid() {
             initial={{ scale: 0 }}
             whileInView={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200 }}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-400/20 to-yellow-600/20 px-4 py-2 text-sm font-medium text-yellow-300 backdrop-blur-sm border border-yellow-500/20"
+            className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-yellow-400/20 to-yellow-600/20 px-4 py-2 text-sm font-medium text-yellow-300 backdrop-blur-sm border border-yellow-500/20"
           >
             🎨 AI Art Gallery
           </motion.div>
@@ -120,11 +120,11 @@ export function ImageGrid() {
           <h2 className="mt-6 text-3xl font-bold sm:text-4xl text-white">
             Explore Stunning AI Art
           </h2>
-          {totalImages > 0 && (
+          {/* {totalImages > 0 && (
             <p className="mt-4 text-gray-400 max-w-2xl mx-auto">
               {totalImages} AI-generated images from our collection
             </p>
-          )}
+          )} */}
         </motion.div>
 
         {/* Image Grid */}
@@ -152,7 +152,7 @@ export function ImageGrid() {
               <div className="flex items-center gap-3 mt-4">
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-yellow-400 border-t-transparent" />
                 <span className="text-sm text-gray-500">
-                  Loading images from Cloudinary...
+                  Loading images...
                 </span>
               </div>
             </div>
