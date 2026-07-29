@@ -1,12 +1,9 @@
-// lib/analytics/tracking.ts
 "use client";
 
-// 🔥 Memory-based fallback for when localStorage is blocked
 let memoryVisitorId: string | null = null;
 let memorySessionId: string | null = null;
 
 export function getVisitorId(): string {
-  // Try to get from localStorage first
   try {
     let visitorId = localStorage.getItem('yelloi_visitor_id');
     if (!visitorId) {
@@ -15,7 +12,6 @@ export function getVisitorId(): string {
     }
     return visitorId;
   } catch (error) {
-    // 🔥 localStorage is blocked (incognito mode)
     console.log('🔒 localStorage blocked, using memory fallback for visitor ID');
     if (!memoryVisitorId) {
       memoryVisitorId = crypto.randomUUID();
@@ -25,7 +21,6 @@ export function getVisitorId(): string {
 }
 
 export function getSessionId(): string {
-  // Try to get from sessionStorage first
   try {
     let sessionId = sessionStorage.getItem('yelloi_session_id');
     if (!sessionId) {
@@ -34,7 +29,6 @@ export function getSessionId(): string {
     }
     return sessionId;
   } catch (error) {
-    // 🔥 sessionStorage is blocked (incognito mode)
     console.log('🔒 sessionStorage blocked, using memory fallback for session ID');
     if (!memorySessionId) {
       memorySessionId = crypto.randomUUID();

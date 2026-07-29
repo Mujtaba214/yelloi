@@ -9,7 +9,6 @@ export async function trackVisitor(data: {
 }) {
   const { visitorId, sessionId, pageUrl, referrer, userAgent } = data;
   
-  // Get or create visitor
   const { data: existingVisitor } = await supabase
     .from('visitors')
     .select('*')
@@ -75,14 +74,13 @@ export async function trackInteraction(data: {
 }) {
   const { visitorId, sessionId, imageId, interactionType } = data;
   
-  // 🔥 Insert into Supabase
   const { error } = await supabase
     .from('image_interactions')
     .insert({
       visitor_id: visitorId,
       session_id: sessionId,
       image_id: imageId,
-      interaction_type: interactionType, // 'download'
+      interaction_type: interactionType, 
       created_at: new Date().toISOString(),
     });
   

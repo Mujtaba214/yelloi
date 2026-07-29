@@ -1,29 +1,23 @@
-// lib/db/queries.ts
 import { supabaseAdmin } from './index';
 
 export async function getAnalyticsOverview() {
   try {
-    // Get ALL visitors (no date filter)
     const { count: totalVisitors } = await supabaseAdmin
       .from('visitors')
       .select('*', { count: 'exact', head: true });
 
-    // Get ALL page views
     const { count: totalPageViews } = await supabaseAdmin
       .from('page_views')
       .select('*', { count: 'exact', head: true });
 
-    // Get ALL image views
     const { count: totalImageViews } = await supabaseAdmin
       .from('image_views')
       .select('*', { count: 'exact', head: true });
 
-    // Get ALL interactions
     const { data: interactions } = await supabaseAdmin
       .from('image_interactions')
       .select('interaction_type');
 
-    // 🔥 Ensure all values are numbers
     const likes = interactions?.filter(i => i.interaction_type === 'like').length || 0;
     const downloads = interactions?.filter(i => i.interaction_type === 'download').length || 0;
     const shares = interactions?.filter(i => i.interaction_type === 'share').length || 0;
@@ -31,7 +25,6 @@ export async function getAnalyticsOverview() {
 
     const totalEngagement = likes + downloads + shares;
     
-    // 🔥 Fix: Ensure totalVisitors is a number and handle division safely
     const visitorCount = Number(totalVisitors) || 0;
     const engagementRate = visitorCount > 0 
       ? ((totalEngagement / visitorCount) * 100).toFixed(1) 

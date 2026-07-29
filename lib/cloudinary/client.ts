@@ -1,27 +1,73 @@
-// lib/cloudinary/client.ts
 import { v2 as cloudinary } from 'cloudinary';
 
-// 🔥 Force load environment variables
-const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || '';
-const apiKey = process.env.CLOUDINARY_API_KEY || '';
-const apiSecret = process.env.CLOUDINARY_API_SECRET || '';
+export interface CloudinaryAccount {
+  id: string;
+  cloudName: string;
+  apiKey: string;
+  apiSecret: string;
+  folder: string;
+  email: string;
+}
 
-console.log('📸 Cloudinary Config Debug:');
-console.log('  cloud_name:', cloudName || '❌ MISSING');
-console.log('  api_key:', apiKey ? '✅ SET' : '❌ MISSING');
-console.log('  api_secret:', apiSecret ? '✅ SET' : '❌ MISSING');
+export const CLOUDINARY_ACCOUNTS: CloudinaryAccount[] = [
+  {
+    id: 'account1',
+    cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_ACCOUNT1_CLOUD_NAME || '',
+    apiKey: process.env.CLOUDINARY_ACCOUNT1_API_KEY || '',
+    apiSecret: process.env.CLOUDINARY_ACCOUNT1_API_SECRET || '',
+    folder: 'yelloi',
+    email: 'danikhaana111@gmail.com',
+  },
+  {
+    id: 'account2',
+    cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_ACCOUNT2_CLOUD_NAME || '',
+    apiKey: process.env.CLOUDINARY_ACCOUNT2_API_KEY || '',
+    apiSecret: process.env.CLOUDINARY_ACCOUNT2_API_SECRET || '',
+    folder: 'yelloi',
+    email: 'vicky.vulgar@gmail.com',
+  },
+  {
+    id: 'account3',
+    cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_ACCOUNT3_CLOUD_NAME || '',
+    apiKey: process.env.CLOUDINARY_ACCOUNT3_API_KEY || '',
+    apiSecret: process.env.CLOUDINARY_ACCOUNT3_API_SECRET || '',
+    folder: 'yelloi',
+    email: 'zeerakchingari@gmail.com',
+  },
+  {
+    id: 'account3',
+    cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_ACCOUNT3_CLOUD_NAME || '',
+    apiKey: process.env.CLOUDINARY_ACCOUNT3_API_KEY || '',
+    apiSecret: process.env.CLOUDINARY_ACCOUNT3_API_SECRET || '',
+    folder: 'yelloi',
+    email: 'zeerakchingari@gmail.com',
+  },
+].filter(acc => acc.cloudName && acc.apiKey && acc.apiSecret);
 
-// Configure Cloudinary with explicit values
-cloudinary.config({
-  cloud_name: cloudName,
-  api_key: apiKey,
-  api_secret: apiSecret,
+const clients: Record<string, any> = {};
+
+CLOUDINARY_ACCOUNTS.forEach(account => {
+  cloudinary.config({
+    cloud_name: account.cloudName,
+    api_key: account.apiKey,
+    api_secret: account.apiSecret,
+  });
+  clients[account.id] = cloudinary;
+  console.log(`✅ Cloudinary configured: ${account.id} (${account.email})`);
 });
 
-// Verify configuration
-const config = cloudinary.config();
-console.log('✅ Cloudinary configured:', {
-  cloud_name: config.cloud_name || '❌',
-});
+export function getClient(accountId: string) {
+  const client = clients[accountId];
+  if (!client) {
+    throw new Error(`Cloudinary client not found for account: ${accountId}`);
+  }
+  return client;
+}
 
-export const cloudinaryClient = cloudinary;
+export function getAllAccounts() {
+  return CLOUDINARY_ACCOUNTS;
+}
+
+export function getAccountById(accountId: string) {
+  return CLOUDINARY_ACCOUNTS.find(acc => acc.id === accountId);
+}

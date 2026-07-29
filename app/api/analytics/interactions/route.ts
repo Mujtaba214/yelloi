@@ -1,4 +1,3 @@
-// app/api/analytics/interactions/route.ts
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/db/index';
 
@@ -9,7 +8,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { visitorId, sessionId, imageId, interactionType } = body;
 
-    // Validate required fields
     if (!visitorId || !imageId || !interactionType) {
       console.error('Missing fields:', { visitorId, imageId, interactionType });
       return NextResponse.json(
@@ -18,7 +16,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Log what we're inserting
     const insertData = {
       visitor_id: visitorId,
       session_id: sessionId || null,
@@ -28,7 +25,6 @@ export async function POST(request: Request) {
     };
     console.log('Inserting data:', insertData);
 
-    // 🔥 Insert into Supabase with direct admin client
     const { data, error } = await supabaseAdmin
       .from('image_interactions')
       .insert(insertData)

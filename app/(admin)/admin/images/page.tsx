@@ -1,4 +1,3 @@
-// app/(admin)/admin/images/page.tsx
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { TopImagesTable } from '@/components/admin/TopImagesTable';
 import { getTopImages } from '@/lib/db/queries';
@@ -6,7 +5,6 @@ import { getTopImages } from '@/lib/db/queries';
 export const revalidate = 60;
 
 export default async function ImagesPage() {
-  // 🔥 Remove startDate - only pass limit
   const images = await getTopImages(50);
 
   return (

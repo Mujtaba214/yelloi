@@ -1,49 +1,49 @@
-// lib/cloudinary/fetch.ts
-import { cloudinaryClient } from './client';
+import { getClient, getAllAccounts } from './client';
 
-export async function fetchCloudinaryImages(
-  limit: number = 20,
+async function fetchFromAccount(
+  account: any,
+  limit: number = 500,
   cursor?: string
 ) {
   try {
-    // 🔥 Check config before making API call
-    const config = cloudinaryClient.config();
-    if (!config.cloud_name) {
-      throw new Error('Cloudinary cloud_name is not configured. Check your environment variables.');
-    }
+    const client = getClient(account.id);
+    console.log(`📸 Fetching from ${account.id} (${account.email})...`);
 
-    console.log('📸 Fetching from Cloudinary (root directory)...');
-
-    // 🔥 IMPORTANT: Use empty prefix for root directory
-    const result = await cloudinaryClient.api.resources({
+    const result = await client.api.resources({
       type: 'upload',
-      prefix: '', // Empty = root directory
+      prefix: account.folder || '',
       max_results: Math.min(limit, 500),
       next_cursor: cursor,
       context: true,
     });
 
-    console.log(`✅ Cloudinary returned ${result.resources?.length || 0} images`);
-
-    const images = (result.resources || []).map((resource: any) => ({
-      id: resource.public_id || `img-${Date.now()}`,
-      url: resource.secure_url || '',
-      prompt: resource.context?.custom?.prompt || 'AI generated image',
-      model: resource.context?.custom?.model || '',
-      parameters: resource.context?.custom?.parameters || '',
-      likes: 0,
-      downloads: 0,
-      views: 0,
-      createdAt: resource.created_at || new Date().toISOString(),
-    }));
+    console.log(`✅ ${account.id} returned ${result.resources?.length || 0} images`);
 
     return {
-      images,
+      accountId: account.id,
+      cloudName: account.cloudName,
+      email: account.email,
+      images: (result.resources || []).map((resource: any) => ({
+        id: resource.public_id,
+        url: resource.secure_url,
+        accountId: account.id,
+        cloudName: account.cloudName,
+        prompt: resource.context?.custom?.prompt || 'AI generated image',
+        model: resource.context?.custom?.model || '',
+        parameters: resource.context?.custom?.parameters || '',
+        likes: 0,
+        downloads: 0,
+        views: 0,
+        createdAt: resource.created_at || new Date().toISOString(),
+      })),
       nextCursor: result.next_cursor || null,
     };
   } catch (error) {
-    console.error('❌ Error fetching from Cloudinary:', error);
+    console.error(`❌ Error fetching from ${account.id}:`, error);
     return {
+      accountId: account.id,
+      cloudName: account.cloudName,
+      email: account.email,
       images: [],
       nextCursor: null,
     };
@@ -51,17 +51,69 @@ export async function fetchCloudinaryImages(
 }
 
 export async function fetchAllImages(limit: number = 20, cursor?: string) {
-  console.log('🔍 fetchAllImages called with:', { limit, cursor });
-  
+  const accounts = getAllAccounts();
+  console.log(`🔍 Fetching from ${accounts.length} accounts...`);
+
+  let accountCursors: Record<string, string | null> = {};
+  if (cursor) {
+    try {
+      accountCursors = JSON.parse(cursor);
+    } catch (e) {
+      console.warn('Invalid cursor format, starting fresh');
+    }
+  }
+
+  const results = await Promise.all(
+    accounts.map(account =>
+      fetchFromAccount(
+        account,
+        Math.ceil(limit / accounts.length) + 5,
+        accountCursors[account.id] ?? undefined
+      )
+    )
+  );
+
+  const combinedImages: any[] = [];
+  const nextCursors: Record<string, string | null> = {};
+
+  results.forEach((result) => {
+    combinedImages.push(...result.images);
+    if (result.nextCursor) {
+      nextCursors[result.accountId] = result.nextCursor;
+    }
+  });
+
+  combinedImages.sort((a, b) =>
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
+  const hasMore = Object.keys(nextCursors).length > 0;
+
+  console.log(`📦 Combined: ${combinedImages.slice(0, limit).length} images`);
+
+  return {
+    images: combinedImages.slice(0, limit),
+    nextCursor: hasMore ? JSON.stringify(nextCursors) : null,
+  };
+}
+
+export async function getTotalImageCount() {
   try {
-    const result = await fetchCloudinaryImages(limit, cursor);
-    console.log(`📦 Returned ${result.images.length} images`);
-    return result;
+    const accounts = getAllAccounts();
+    let total = 0;
+
+    for (const account of accounts) {
+      const client = getClient(account.id);
+      const result = await client.api.resources({
+        type: 'upload',
+        max_results: 1,
+      });
+      total += result.resources?.length || 0;
+    }
+
+    return total;
   } catch (error) {
-    console.error('❌ Error in fetchAllImages:', error);
-    return {
-      images: [],
-      nextCursor: null,
-    };
+    console.error('Error getting total image count:', error);
+    return 0;
   }
 }

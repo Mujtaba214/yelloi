@@ -1,31 +1,25 @@
-// app/test-data/page.tsx (temporary)
 "use client";
 
 import { trackPageView, trackImageView, trackInteraction } from '@/lib/analytics/tracking';
 
 export default function TestData() {
   const generateTestData = async () => {
-    // Simulate page view
     await trackPageView('/test');
     console.log('✅ Page view tracked');
     
-    // Simulate image views
     const imageIds = ['img-1', 'img-2', 'img-3'];
     for (const id of imageIds) {
       await trackImageView(id);
       console.log(`✅ Image view tracked: ${id}`);
     }
     
-    // Simulate likes
     await trackInteraction('img-1', 'like');
     await trackInteraction('img-2', 'like');
     console.log('✅ Likes tracked');
     
-    // Simulate download
     await trackInteraction('img-1', 'download');
     console.log('✅ Download tracked');
     
-    // Simulate share
     await trackInteraction('img-3', 'share');
     console.log('✅ Share tracked');
     

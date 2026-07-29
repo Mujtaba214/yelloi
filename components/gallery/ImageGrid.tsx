@@ -4,34 +4,31 @@ import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ImageCard } from "./ImageCard";
 import { ImageSkeleton } from "./ImageSkeleton";
-import useInfiniteScroll from "../../hooks/useInfiniteScroll";
-import { ITEMS_PER_PAGE } from "@/lib/utils/constants";
 import { ImageType } from "@/types";
 import useLocalStorage from "../../hooks/useLocalStorage";
 
 export function ImageGrid() {
   const [images, setImages] = useState<ImageType[]>([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
   const [cursor, setCursor] = useState<string | null>(null);
+  const [totalImages, setTotalImages] = useState(0);
   const [interactions, setInteractions] = useLocalStorage(
     "yelloi-interactions",
     {},
   );
 
-  // Load images from Cloudinary API
   const loadImages = useCallback(async (reset: boolean = false) => {
     try {
       setLoading(true);
       
-      const currentCursor = reset ? undefined : cursor || undefined;
+      const currentCursor = reset ? undefined : cursor;
       
       const response = await fetch('/api/images', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          limit: ITEMS_PER_PAGE,
+          limit: 20,
           cursor: currentCursor,
         }),
       });
@@ -40,6 +37,7 @@ export function ImageGrid() {
       
       if (reset) {
         setImages(data.images);
+        setTotalImages(data.total || 0);
       } else {
         setImages(prev => [...prev, ...data.images]);
       }
@@ -53,21 +51,34 @@ export function ImageGrid() {
     }
   }, [cursor]);
 
-  // Initial load
   useEffect(() => {
     loadImages(true);
   }, []);
 
-  // Load more for infinite scroll
   const loadMore = useCallback(async () => {
     if (!hasMore || loading) return;
     await loadImages(false);
   }, [hasMore, loading, loadImages]);
 
-  const { loaderRef, loading: scrollLoading } = useInfiniteScroll({ 
-    loadMore, 
-    hasMore 
-  });
+  useEffect(() => {
+    if (!hasMore || loading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    const loaderElement = document.getElementById('loader-trigger');
+    if (loaderElement) {
+      observer.observe(loaderElement);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadMore]);
 
   const handleLike = (imageId: string, liked: boolean) => {
     setImages((prev) =>
@@ -109,13 +120,15 @@ export function ImageGrid() {
           <h2 className="mt-6 text-3xl font-bold sm:text-4xl text-white">
             Explore Stunning AI Art
           </h2>
-          {/* <p className="mt-4 text-gray-400 max-w-2xl mx-auto">
-            Scroll through {images.length} AI-generated images from our collection
-          </p> */}
+          {totalImages > 0 && (
+            <p className="mt-4 text-gray-400 max-w-2xl mx-auto">
+              {totalImages} AI-generated images from our collection
+            </p>
+          )}
         </motion.div>
 
-        {/* 🔥 MASONRY GRID - CSS Columns with 10px margin-bottom */}
-        <div className="masonry-grid">
+        {/* Image Grid */}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {images.map((image, idx) => (
             <ImageCard
               key={`${image.id}-${idx}`}
@@ -128,7 +141,7 @@ export function ImageGrid() {
         </div>
 
         {/* Loading & End States */}
-        <div ref={loaderRef} className="flex justify-center py-12">
+        <div className="flex justify-center py-12">
           {loading && images.length === 0 && (
             <div className="flex flex-col items-center gap-3">
               <div className="grid grid-cols-4 gap-4">
@@ -145,12 +158,10 @@ export function ImageGrid() {
             </div>
           )}
 
-          {scrollLoading && images.length > 0 && (
+          {loading && images.length > 0 && (
             <div className="flex items-center gap-3">
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-yellow-400 border-t-transparent" />
-              <span className="text-sm text-gray-500">
-                Loading more AI art...
-              </span>
+              <span className="text-sm text-gray-500">Loading more...</span>
             </div>
           )}
 
@@ -161,51 +172,17 @@ export function ImageGrid() {
               className="text-center"
             >
               <div className="text-4xl mb-3">✨</div>
-              <p className="text-gray-400">
-                You've reached the end of our gallery
+              <p className="text-gray-400">You've reached the end of our gallery</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Total {totalImages} images loaded
               </p>
-              {/* <p className="text-sm text-gray-500 mt-1">
-                Total {images.length} images loaded
-              </p> */}
             </motion.div>
           )}
         </div>
+
+        {/* 🔥 Invisible trigger for infinite scroll */}
+        <div id="loader-trigger" className="h-1" />
       </div>
-
-      {/* 🔥 MASONRY GRID STYLES WITH 10px MARGIN-BOTTOM */}
-      <style jsx>{`
-        .masonry-grid {
-          column-count: 4;
-          column-gap: 1.5rem;
-        }
-
-        .masonry-grid > div {
-          break-inside: avoid;
-          margin-bottom: 10px; /* 🔥 10px gap between images */
-        }
-
-        @media (max-width: 1024px) {
-          .masonry-grid {
-            column-count: 3;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .masonry-grid {
-            column-count: 2;
-            column-gap: 1rem;
-          }
-          .masonry-grid > div {
-            margin-bottom: 10px;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .masonry-grid {
-            column-count: 1;
-          }
-        }
-      `}</style>
     </section>
   );
 }

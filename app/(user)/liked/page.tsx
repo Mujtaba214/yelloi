@@ -16,13 +16,11 @@ export default function LikedPage() {
   const [likedImages, setLikedImages] = useState<ImageType[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch all images and filter liked ones
   useEffect(() => {
     const fetchLikedImages = async () => {
       try {
         setLoading(true);
         
-        // Get all image IDs that are liked
         const likedIds = Object.entries(interactions)
           .filter(([_, value]) => value.liked)
           .map(([id]) => id);
@@ -33,19 +31,17 @@ export default function LikedPage() {
           return;
         }
 
-        // Fetch images from Cloudinary API
         const response = await fetch('/api/images', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            limit: 500, // Get enough images to cover likes
+            limit: 500, 
             cursor: undefined,
           }),
         });
 
         const data = await response.json();
         
-        // Filter only liked images
         const filtered = data.images.filter((img: ImageType) => 
           likedIds.includes(img.id)
         );

@@ -1,4 +1,3 @@
-// app/(admin)/admin/analytics/page.tsx
 import { Suspense } from 'react';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { StatsCards } from '@/components/admin/StatsCards';
@@ -13,7 +12,6 @@ import {
 export const revalidate = 60;
 
 export default async function AnalyticsPage() {
-  // 🔥 No arguments needed
   const [overview, dailyData, topImages] = await Promise.all([
     getAnalyticsOverview(),
     getDailyAnalytics(),

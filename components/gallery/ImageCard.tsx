@@ -10,7 +10,7 @@ import { trackImageView } from "@/lib/analytics/tracking";
 interface ImageCardProps {
   image: ImageType;
   index: number;
-  onLike?: (imageId: string, liked: boolean) => void;  // ← Optional
+  onLike?: (imageId: string, liked: boolean) => void;  
   onDislike?: (imageId: string, disliked: boolean) => void;
   onDownload?: (imageId: string) => void;
   onClick?: () => void;
@@ -31,7 +31,6 @@ export function ImageCard({
   const [hasTrackedView, setHasTrackedView] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // Detect mobile device
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -41,7 +40,6 @@ export function ImageCard({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Track image view when visible
   useEffect(() => {
     if (!cardRef.current || hasTrackedView) return;
 
@@ -65,7 +63,6 @@ export function ImageCard({
     };
   }, [image.id, hasTrackedView]);
 
-  // Auto-hide actions after 3 seconds on mobile
   useEffect(() => {
     if (showActions) {
       const timer = setTimeout(() => setShowActions(false), 3000);
@@ -94,15 +91,13 @@ export function ImageCard({
         if (onClick) onClick();
       }}
       className="relative overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer"
-      style={{ marginBottom: '10px' }} // 🔥 Applied directly to the card!
+      style={{ marginBottom: '10px' }} 
     >
-      {/* Image Container - FULL WIDTH, NATURAL HEIGHT */}
       <div className="relative w-full">
         {!imageLoaded && (
           <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600" />
         )}
         
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={image.url}
           alt={image.prompt || `AI image ${image.id}`}
@@ -139,12 +134,6 @@ export function ImageCard({
             transition={{ duration: 0.2 }}
             className="pointer-events-auto"
           >
-            {/* Prompt Preview
-            {image.prompt && (
-              <p className="mb-2 line-clamp-2 text-[10px] sm:text-xs text-white/80">
-                {image.prompt.substring(0, 60)}...
-              </p>
-            )} */}
             
             {/* Action Buttons */}
             <ImageActions

@@ -1,4 +1,3 @@
-// app/api/analytics/route.ts
 import { NextResponse } from 'next/server';
 import { 
   getAnalyticsOverview, 
@@ -10,12 +9,8 @@ import {
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const period = searchParams.get('period') || '7d';
-    
-    // 🔥 No date filtering - get ALL data
     const [overview, dailyData, topImages, recentActivity] = await Promise.all([
       getAnalyticsOverview(),
       getDailyAnalytics(),
@@ -32,8 +27,20 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Analytics API error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch analytics data' },
-      { status: 500 }
-    );
+      { 
+        overview: {
+          totalVisitors: 0,
+          totalPageViews: 0,
+          totalImageViews: 0,
+          totalLikes: 0,
+          totalDownloads: 0,
+          totalShares: 0,
+          engagementRate: '0',
+        },
+        dailyData: [],
+        topImages: [],
+        recentActivity: [],
+      },
+    )
   }
 }

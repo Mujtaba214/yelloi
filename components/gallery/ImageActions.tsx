@@ -52,7 +52,6 @@ export function ImageActions({
     setLikes(prev => newLiked ? prev + 1 : prev - 1);
     onLike?.(newLiked);
     
-    // 🔥 ONLY TRACK WHEN USER IS LIKING (NOT UNLIKING)
     if (newLiked) {
       console.log('❤️ Tracking like for image:', imageId);
       await trackInteraction(imageId, 'like');
@@ -60,8 +59,6 @@ export function ImageActions({
       setShowCheck(true);
       setTimeout(() => setShowCheck(false), 1500);
     } else {
-      // User unliked - don't track, just show a message
-      console.log('💔 User unliked image:', imageId);
       setCheckMessage('Unliked 💔');
       setShowCheck(true);
       setTimeout(() => setShowCheck(false), 1500);
@@ -84,7 +81,6 @@ export function ImageActions({
     }
     onDislike?.(newDisliked);
     
-    // 🔥 ONLY TRACK WHEN USER IS DISLIKING (NOT UNDISLIKING)
     if (newDisliked) {
       console.log('👎 Tracking dislike for image:', imageId);
       await trackInteraction(imageId, 'dislike');
@@ -104,7 +100,6 @@ export function ImageActions({
     
     if (!imageUrl) return;
     
-    // 🔥 TRACK DOWNLOAD (always counts as a download)
     console.log('📥 Tracking download for image:', imageId);
     await trackInteraction(imageId, 'download');
     
@@ -136,7 +131,6 @@ export function ImageActions({
   const handleShare = async (e?: React.MouseEvent | React.TouchEvent) => {
     e?.stopPropagation();
     
-    // 🔥 TRACK SHARE (always counts as a share)
     console.log('🔗 Tracking share for image:', imageId);
     await trackInteraction(imageId, 'share');
     
@@ -232,10 +226,10 @@ export function ImageActions({
             className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium text-white shadow-lg z-50"
             style={{
               backgroundColor: checkMessage.includes('❤️') || checkMessage.includes('👍') 
-                ? '#22c55e'  // green
+                ? '#22c55e'  
                 : checkMessage.includes('💔') || checkMessage.includes('👎')
-                ? '#ef4444'  // red
-                : '#22c55e'  // default green
+                ? '#ef4444' 
+                : '#22c55e' 
             }}
           >
             {checkMessage}
