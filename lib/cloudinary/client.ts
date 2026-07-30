@@ -33,15 +33,7 @@ export const CLOUDINARY_ACCOUNTS: CloudinaryAccount[] = [
     apiSecret: process.env.CLOUDINARY_ACCOUNT3_API_SECRET || '',
     folder: 'yelloi',
     email: 'zeerakchingari@gmail.com',
-  },
-  {
-    id: 'account3',
-    cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_ACCOUNT3_CLOUD_NAME || '',
-    apiKey: process.env.CLOUDINARY_ACCOUNT3_API_KEY || '',
-    apiSecret: process.env.CLOUDINARY_ACCOUNT3_API_SECRET || '',
-    folder: 'yelloi',
-    email: 'zeerakchingari@gmail.com',
-  },
+  }
 ].filter(acc => acc.cloudName && acc.apiKey && acc.apiSecret);
 
 const clients: Record<string, any> = {};
