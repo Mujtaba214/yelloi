@@ -10,10 +10,11 @@ import { trackImageView } from "@/lib/analytics/tracking";
 interface ImageCardProps {
   image: ImageType;
   index: number;
-  onLike?: (imageId: string, liked: boolean) => void;  
+  onLike?: (imageId: string, liked: boolean) => void;
   onDislike?: (imageId: string, disliked: boolean) => void;
   onDownload?: (imageId: string) => void;
   onClick?: () => void;
+  onViewTracked?: (imageId: string) => void; // 🔥 New prop
 }
 
 export function ImageCard({ 
@@ -22,13 +23,15 @@ export function ImageCard({
   onLike, 
   onDislike, 
   onDownload,
-  onClick 
+  onClick,
+  onViewTracked
 }: ImageCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [hasTrackedView, setHasTrackedView] = useState(false);
+  const [views, setViews] = useState(image.views || 0); 
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -50,6 +53,12 @@ export function ImageCard({
             console.log('👁️ Image visible, tracking view:', image.id);
             trackImageView(image.id);
             setHasTrackedView(true);
+            // 🔥 Increment local views count
+            setViews(prev => prev + 1);
+            // 🔥 Notify parent component
+            if (onViewTracked) {
+              onViewTracked(image.id);
+            }
           }
         });
       },
@@ -61,7 +70,7 @@ export function ImageCard({
     return () => {
       observer.disconnect();
     };
-  }, [image.id, hasTrackedView]);
+  }, [image.id, hasTrackedView, onViewTracked]);
 
   useEffect(() => {
     if (showActions) {
@@ -91,11 +100,11 @@ export function ImageCard({
         if (onClick) onClick();
       }}
       className="relative overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer"
-      style={{ marginBottom: '10px' }} 
+      style={{ marginBottom: '10px' }}
     >
       <div className="relative w-full">
         {!imageLoaded && (
-          <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600" />
+          <div className="absolute inset-0 animate-pulse bg-linear-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600" />
         )}
         
         <img
@@ -120,7 +129,7 @@ export function ImageCard({
             opacity: (isMobile && showActions) || (!isMobile && isHovered) ? 1 : 0 
           }}
           transition={{ duration: 0.3 }}
-          className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none"
+          className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent pointer-events-none"
         />
 
         {/* Actions Container */}
@@ -134,8 +143,6 @@ export function ImageCard({
             transition={{ duration: 0.2 }}
             className="pointer-events-auto"
           >
-            
-            {/* Action Buttons */}
             <ImageActions
               imageId={image.id}
               imageUrl={image.url}
@@ -161,7 +168,6 @@ export function ImageCard({
           )}
         </div>
 
-        {/* Stats Badge */}
         <motion.div
           initial={{ opacity: 0, x: 10 }}
           animate={{ 
@@ -170,7 +176,7 @@ export function ImageCard({
           }}
           className="absolute top-2 right-2 sm:top-3 sm:right-3 rounded-full bg-black/50 px-1.5 py-0.5 sm:px-2 sm:py-1 text-[10px] sm:text-xs text-white backdrop-blur-sm pointer-events-none"
         >
-          👁️ {image.views?.toLocaleString() || 0}
+          👁️ {views.toLocaleString()} 
         </motion.div>
       </div>
     </motion.div>

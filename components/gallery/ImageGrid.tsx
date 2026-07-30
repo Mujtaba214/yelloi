@@ -98,6 +98,16 @@ export function ImageGrid() {
     );
   };
 
+  const handleViewTracked = (imageId: string) => {
+    setImages((prev) =>
+      prev.map((img) =>
+        img.id === imageId
+          ? { ...img, views: (img.views || 0) + 1 }
+          : img,
+      ),
+    );
+  };
+
   return (
     <section className="px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
@@ -120,11 +130,6 @@ export function ImageGrid() {
           <h2 className="mt-6 text-3xl font-bold sm:text-4xl text-white">
             Explore Stunning AI Art
           </h2>
-          {/* {totalImages > 0 && (
-            <p className="mt-4 text-gray-400 max-w-2xl mx-auto">
-              {totalImages} AI-generated images from our collection
-            </p>
-          )} */}
         </motion.div>
 
         {/* Image Grid */}
@@ -136,6 +141,7 @@ export function ImageGrid() {
               index={idx}
               onLike={handleLike}
               onDownload={handleDownload}
+              onViewTracked={handleViewTracked} // 🔥 Pass view tracking handler
             />
           ))}
         </div>
