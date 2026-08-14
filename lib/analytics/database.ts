@@ -1,3 +1,4 @@
+// lib/analytics/database.ts
 import { supabase } from '@/lib/db/index';
 
 export async function trackVisitor(data: {
@@ -7,47 +8,52 @@ export async function trackVisitor(data: {
   referrer: string;
   userAgent: string;
 }) {
-  const { visitorId, sessionId, pageUrl, referrer, userAgent } = data;
-  
-  const { data: existingVisitor } = await supabase
-    .from('visitors')
-    .select('*')
-    .eq('visitor_id', visitorId)
-    .single();
+  try {
+    const { visitorId, sessionId, pageUrl, referrer, userAgent } = data;
+    
+    // Get or create visitor
+    const { data: existingVisitor } = await supabase
+      .from('visitors')
+      .select('*')
+      .eq('visitor_id', visitorId)
+      .single();
 
-  if (existingVisitor) {
+    if (existingVisitor) {
+      await supabase
+        .from('visitors')
+        .update({
+          last_visit: new Date().toISOString(),
+          visit_count: existingVisitor.visit_count + 1,
+        })
+        .eq('visitor_id', visitorId);
+    } else {
+      const deviceInfo = parseUserAgent(userAgent);
+      await supabase
+        .from('visitors')
+        .insert({
+          visitor_id: visitorId,
+          user_agent: userAgent,
+          device_type: deviceInfo.deviceType,
+          browser: deviceInfo.browser,
+          os: deviceInfo.os,
+          first_visit: new Date().toISOString(),
+          last_visit: new Date().toISOString(),
+          visit_count: 1,
+        });
+    }
+
     await supabase
-      .from('visitors')
-      .update({
-        last_visit: new Date().toISOString(),
-        visit_count: existingVisitor.visit_count + 1,
-      })
-      .eq('visitor_id', visitorId);
-  } else {
-    const deviceInfo = parseUserAgent(userAgent);
-    await supabase
-      .from('visitors')
+      .from('page_views')
       .insert({
         visitor_id: visitorId,
-        user_agent: userAgent,
-        device_type: deviceInfo.deviceType,
-        browser: deviceInfo.browser,
-        os: deviceInfo.os,
-        first_visit: new Date().toISOString(),
-        last_visit: new Date().toISOString(),
-        visit_count: 1,
+        session_id: sessionId,
+        page_url: pageUrl,
+        referrer: referrer || '',
+        created_at: new Date().toISOString(),
       });
+  } catch (error) {
+    console.error('❌ Error tracking visitor:', error);
   }
-
-  await supabase
-    .from('page_views')
-    .insert({
-      visitor_id: visitorId,
-      session_id: sessionId,
-      page_url: pageUrl,
-      referrer: referrer || '',
-      created_at: new Date().toISOString(),
-    });
 }
 
 export async function trackImageView(data: {
@@ -55,15 +61,19 @@ export async function trackImageView(data: {
   sessionId: string;
   imageId: string;
 }) {
-  const { visitorId, sessionId, imageId } = data;
-  await supabase
-    .from('image_views')
-    .insert({
-      visitor_id: visitorId,
-      session_id: sessionId,
-      image_id: imageId,
-      created_at: new Date().toISOString(),
-    });
+  try {
+    const { visitorId, sessionId, imageId } = data;
+    await supabase
+      .from('image_views')
+      .insert({
+        visitor_id: visitorId,
+        session_id: sessionId,
+        image_id: imageId,
+        created_at: new Date().toISOString(),
+      });
+  } catch (error) {
+    console.error('❌ Error tracking image view:', error);
+  }
 }
 
 export async function trackInteraction(data: {
@@ -72,21 +82,19 @@ export async function trackInteraction(data: {
   imageId: string;
   interactionType: 'like' | 'dislike' | 'download' | 'share';
 }) {
-  const { visitorId, sessionId, imageId, interactionType } = data;
-  
-  const { error } = await supabase
-    .from('image_interactions')
-    .insert({
-      visitor_id: visitorId,
-      session_id: sessionId,
-      image_id: imageId,
-      interaction_type: interactionType, 
-      created_at: new Date().toISOString(),
-    });
-  
-  if (error) {
-    console.error('Supabase insert error:', error);
-    throw error;
+  try {
+    const { visitorId, sessionId, imageId, interactionType } = data;
+    await supabase
+      .from('image_interactions')
+      .insert({
+        visitor_id: visitorId,
+        session_id: sessionId,
+        image_id: imageId,
+        interaction_type: interactionType,
+        created_at: new Date().toISOString(),
+      });
+  } catch (error) {
+    console.error('❌ Error tracking interaction:', error);
   }
 }
 
