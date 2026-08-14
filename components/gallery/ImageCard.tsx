@@ -135,7 +135,7 @@ export function ImageCard({
         <img
           src={image.url}
           alt={image.prompt || `AI image ${uniqueId}`}
-          className={`w-full h-auto transition-all duration-700 ${
+          className={`w-full h-auto transition-all aspect-9/16 duration-700 ${
             imageLoaded ? 'opacity-100' : 'opacity-0'
           } ${!isMobile && isHovered ? 'scale-105' : 'scale-100'}`}
           onLoad={() => setImageLoaded(true)}

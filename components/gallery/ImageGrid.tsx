@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ImageCard } from "./ImageCard";
 import { ImageSkeleton } from "./ImageSkeleton";
@@ -10,100 +10,36 @@ import useLocalStorage from "../../hooks/useLocalStorage";
 export function ImageGrid() {
   const [images, setImages] = useState<ImageType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(false);
-  const [cursor, setCursor] = useState<string | null>(null);
   const [totalImages, setTotalImages] = useState(0);
   const [interactions, setInteractions] = useLocalStorage(
     "yelloi-interactions",
     {},
   );
-  
-  const isLoadingRef = useRef(false);
-  const hasMoreRef = useRef(false);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const loaderRef = useRef<HTMLDivElement>(null);
 
   const loadImages = useCallback(async (reset: boolean = false) => {
-    if (isLoadingRef.current) return;
-    
     try {
-      isLoadingRef.current = true;
       setLoading(true);
-      
-      const currentCursor = reset ? undefined : cursor;
       
       const response = await fetch('/api/images', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          // 🔥 Remove limit - fetch ALL images
-          cursor: currentCursor,
-        }),
+        body: JSON.stringify({}),
       });
       
       const data = await response.json();
       
-      if (reset) {
-        setImages(data.images);
-        setTotalImages(data.total || data.images?.length || 0);
-      } else {
-        setImages(prev => [...prev, ...data.images]);
-      }
-      
-      setCursor(data.nextCursor);
-      const hasMoreData = !!data.nextCursor;
-      setHasMore(hasMoreData);
-      hasMoreRef.current = hasMoreData;
+      setImages(data.images || []);
+      setTotalImages(data.total || 0);
     } catch (error) {
       console.error('Error loading images:', error);
     } finally {
       setLoading(false);
-      isLoadingRef.current = false;
     }
-  }, [cursor]);
+  }, []);
 
-  // Initial load
   useEffect(() => {
     loadImages(true);
   }, []);
-
-  const loadMore = useCallback(async () => {
-    if (isLoadingRef.current || !hasMoreRef.current) return;
-    await loadImages(false);
-  }, [loadImages]);
-
-  // Setup Intersection Observer
-  useEffect(() => {
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-      observerRef.current = null;
-    }
-
-    if (!loaderRef.current || !hasMore || loading) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMoreRef.current && !isLoadingRef.current) {
-          console.log('📦 Loading more images...');
-          loadMore();
-        }
-      },
-      { 
-        rootMargin: "200px",
-        threshold: 0.1
-      }
-    );
-
-    observer.observe(loaderRef.current);
-    observerRef.current = observer;
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-        observerRef.current = null;
-      }
-    };
-  }, [hasMore, loading, loadMore]);
 
   const handleLike = (imageId: string, liked: boolean) => {
     setImages((prev) =>
@@ -157,8 +93,8 @@ export function ImageGrid() {
          
         </motion.div>
 
-        {/* Masonry Grid */}
-        <div className="masonry-grid">
+        {/* 🔥 FIXED GRID - Responsive columns */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4 md:gap-5 lg:gap-6">
           {images.map((image, idx) => (
             <ImageCard
               key={`${image.id}-${idx}`}
@@ -171,11 +107,11 @@ export function ImageGrid() {
           ))}
         </div>
 
-        {/* Loading & End States */}
-        <div className="flex justify-center py-12">
-          {loading && images.length === 0 && (
+        {/* Loading State */}
+        {/* <div className="flex justify-center py-12">
+          {loading && (
             <div className="flex flex-col items-center gap-3">
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[...Array(4)].map((_, i) => (
                   <ImageSkeleton key={i} />
                 ))}
@@ -189,52 +125,8 @@ export function ImageGrid() {
             </div>
           )}
 
-          {loading && images.length > 0 && (
-            <div className="flex items-center gap-3">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-yellow-400 border-t-transparent" />
-              <span className="text-sm text-gray-500">Loading more...</span>
-            </div>
-          )}
-
-          
-        </div>
-
-      
+        </div> */}
       </div>
-
-      <style jsx>{`
-        .masonry-grid {
-          column-count: 4;
-          column-gap: 1.5rem;
-        }
-
-        .masonry-grid > div {
-          break-inside: avoid;
-          margin-bottom: 1rem;
-        }
-
-        @media (max-width: 1024px) {
-          .masonry-grid {
-            column-count: 3;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .masonry-grid {
-            column-count: 2;
-            column-gap: 1rem;
-          }
-          .masonry-grid > div {
-            margin-bottom: 0.75rem;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .masonry-grid {
-            column-count: 1;
-          }
-        }
-      `}</style>
     </section>
   );
 }
