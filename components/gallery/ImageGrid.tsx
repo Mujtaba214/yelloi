@@ -139,7 +139,7 @@ export function ImageGrid() {
   };
 
   return (
-    <section className="px-4 py-8 sm:px-6 lg:px-8">
+    <section className="px-4 py-8 sm:px-6 lg:px-8 bg-black min-h-screen">
       <div className="mx-auto max-w-7xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -151,7 +151,7 @@ export function ImageGrid() {
             initial={{ scale: 0 }}
             whileInView={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200 }}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-400/20 to-yellow-600/20 px-4 py-2 text-sm font-medium text-yellow-300 backdrop-blur-sm border border-yellow-500/20"
+            className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-yellow-400/20 to-yellow-600/20 px-4 py-2 text-sm font-medium text-yellow-300 backdrop-blur-sm border border-yellow-500/20"
           >
             🎨 AI Art Gallery
           </motion.div>
