@@ -82,7 +82,7 @@ export function ImageGrid() {
             initial={{ scale: 0 }}
             whileInView={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200 }}
-            className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-yellow-400/20 to-yellow-600/20 px-4 py-2 text-sm font-medium text-yellow-300 backdrop-blur-sm border border-yellow-500/20"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-400/20 to-yellow-600/20 px-4 py-2 text-sm font-medium text-yellow-300 backdrop-blur-sm border border-yellow-500/20"
           >
             🎨 AI Art Gallery
           </motion.div>
@@ -90,11 +90,15 @@ export function ImageGrid() {
           <h2 className="mt-6 text-3xl font-bold sm:text-4xl text-white">
             Explore Stunning AI Art
           </h2>
-         
+          {totalImages > 0 && (
+            <p className="mt-4 text-gray-400 max-w-2xl mx-auto">
+              {totalImages} AI-generated images from our collection
+            </p>
+          )}
         </motion.div>
 
-        {/* 🔥 FIXED GRID - Responsive columns */}
-        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4 md:gap-5 lg:gap-6">
+        {/* 🔥 MASONRY GRID - CSS Columns for dynamic height on all devices */}
+        <div className="masonry-grid">
           {images.map((image, idx) => (
             <ImageCard
               key={`${image.id}-${idx}`}
@@ -108,7 +112,7 @@ export function ImageGrid() {
         </div>
 
         {/* Loading State */}
-        {/* <div className="flex justify-center py-12">
+        <div className="flex justify-center py-12">
           {loading && (
             <div className="flex flex-col items-center gap-3">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -125,8 +129,65 @@ export function ImageGrid() {
             </div>
           )}
 
-        </div> */}
+          {!loading && images.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center"
+            >
+              <div className="text-4xl mb-3">✨</div>
+              <p className="text-gray-400">
+                All {totalImages} images loaded
+              </p>
+            </motion.div>
+          )}
+        </div>
       </div>
+
+      <style jsx>{`
+        .masonry-grid {
+          column-count: 1;
+          column-gap: 0.75rem;
+        }
+
+        .masonry-grid > div {
+          break-inside: avoid;
+          margin-bottom: 0.75rem;
+        }
+
+        /* 🔥 Tablet (640px - 1024px) */
+        @media (min-width: 820px) {
+          .masonry-grid {
+            column-count: 2;
+            column-gap: 1rem;
+          }
+          .masonry-grid > div {
+            margin-bottom: 1rem;
+          }
+        }
+
+        /* 🔥 Desktop (1024px - 1280px) */
+        @media (min-width: 1024px) {
+          .masonry-grid {
+            column-count: 4;
+            column-gap: 1.25rem;
+          }
+          .masonry-grid > div {
+            margin-bottom: 1.25rem;
+          }
+        }
+
+        /* 🔥 Large Desktop (1280px+) */
+        @media (min-width: 1280px) {
+          .masonry-grid {
+            column-count: 4;
+            column-gap: 1.5rem;
+          }
+          .masonry-grid > div {
+            margin-bottom: 1.5rem;
+          }
+        }
+      `}</style>
     </section>
   );
 }
