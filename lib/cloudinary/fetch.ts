@@ -1,145 +1,141 @@
 // lib/cloudinary/fetch.ts
 import { getClient, getAllAccounts } from './client';
 
-async function fetchFromAccount(
-  account: any,
-  limit: number = 500,
-  cursor?: string
-) {
-  try {
+// 🔥 Fetch ALL images from ALL accounts (NO DEDUPLICATION)
+export async function fetchAllImagesFromAllAccounts() {
+  const accounts = getAllAccounts();
+  console.log(`🔍 Fetching ALL images from ${accounts.length} accounts...`);
+
+  const allImages: any[] = [];
+
+  for (const account of accounts) {
     const client = getClient(account.id);
     console.log(`📸 Fetching from ${account.id} (${account.email})...`);
-    console.log(`📁 Using folder: "${account.folder}"`);
 
-    // 🔥 Try with and without trailing slash
-    const prefixes = [account.folder, `${account.folder}/`, ''];
-    let result = null;
-    let usedPrefix = '';
+    let cursor: string | undefined = undefined;
+    let hasMore = true;
+    let batchCount = 0;
 
-    for (const prefix of prefixes) {
+    while (hasMore) {
       try {
-        const testResult = await client.api.resources({
+        // Try root first
+        let result:any = await client.api.resources({
           type: 'upload',
-          prefix: prefix,
-          max_results: Math.min(limit, 500),
+          max_results: 500,
           next_cursor: cursor,
           context: true,
         });
-        
-        if (testResult.resources && testResult.resources.length > 0) {
-          result = testResult;
-          usedPrefix = prefix;
-          console.log(`✅ Found ${testResult.resources.length} images in "${prefix || 'root'}"`);
+
+        // If no images in root, try yelloi folder
+        if (!result.resources || result.resources.length === 0) {
+          result = await client.api.resources({
+            type: 'upload',
+            prefix: 'yelloi',
+            max_results: 500,
+            next_cursor: cursor,
+            context: true,
+          });
+        }
+
+        if (!result.resources || result.resources.length === 0) {
+          console.log(`⚠️ No images found in ${account.id}`);
           break;
         }
-      } catch (e) {
-        console.log(`No images in "${prefix || 'root'}"`);
+
+        // 🔥 Add ALL images (NO deduplication)
+        for (const resource of result.resources) {
+          allImages.push({
+            id: `${account.id}_${resource.public_id}`,
+            originalId: resource.public_id,
+            url: resource.secure_url,
+            accountId: account.id,
+            cloudName: account.cloudName,
+            prompt: resource.context?.custom?.prompt || 'AI generated image',
+            model: resource.context?.custom?.model || '',
+            parameters: resource.context?.custom?.parameters || '',
+            likes: 0,
+            downloads: 0,
+            views: 0,
+            createdAt: resource.created_at || new Date().toISOString(),
+          });
+        }
+
+        cursor = result.next_cursor || undefined;
+        hasMore = !!result.next_cursor;
+        batchCount++;
+        console.log(`📊 ${account.id} batch ${batchCount}: ${result.resources.length} images (${allImages.length} total so far)`);
+
+        if (batchCount > 100) break;
+      } catch (error) {
+        console.error(`❌ Error fetching from ${account.id}:`, error);
+        hasMore = false;
       }
     }
 
-    if (!result) {
-      console.log(`⚠️ No images found in ${account.id} for any prefix`);
-      return {
-        accountId: account.id,
-        cloudName: account.cloudName,
-        email: account.email,
-        images: [],
-        nextCursor: null,
-      };
-    }
-
-    return {
-      accountId: account.id,
-      cloudName: account.cloudName,
-      email: account.email,
-      images: (result.resources || []).map((resource: any) => ({
-        id: `${account.id}_${resource.public_id}`,
-        originalId: resource.public_id,
-        url: resource.secure_url,
-        accountId: account.id,
-        cloudName: account.cloudName,
-        prompt: resource.context?.custom?.prompt || 'AI generated image',
-        model: resource.context?.custom?.model || '',
-        parameters: resource.context?.custom?.parameters || '',
-        likes: 0,
-        downloads: 0,
-        views: 0,
-        createdAt: resource.created_at || new Date().toISOString(),
-      })),
-      nextCursor: result.next_cursor || null,
-    };
-  } catch (error) {
-    console.error(`❌ Error fetching from ${account.id}:`, error);
-    return {
-      accountId: account.id,
-      cloudName: account.cloudName,
-      email: account.email,
-      images: [],
-      nextCursor: null,
-    };
-  }
-}
-
-export async function fetchAllImages(limit: number = 20, cursor?: string) {
-  const accounts = getAllAccounts();
-  console.log(`🔍 Fetching from ${accounts.length} accounts...`);
-
-  let accountCursors: Record<string, string | null> = {};
-  if (cursor) {
-    try {
-      accountCursors = JSON.parse(cursor);
-    } catch (e) {
-      console.warn('Invalid cursor format, starting fresh');
-    }
+    console.log(`✅ ${account.id} complete: ${allImages.filter(img => img.accountId === account.id).length} images`);
   }
 
-  // 🔥 Fetch from all accounts in parallel
-  const results = await Promise.all(
-    accounts.map(account =>
-      fetchFromAccount(
-        account,
-        Math.ceil(limit / accounts.length) + 10,
-        accountCursors[account.id] ?? undefined
-      )
-    )
-  );
-
-  // 🔥 Combine images with deduplication
-  const combinedImages: any[] = [];
-  const nextCursors: Record<string, string | null> = {};
-  const seenIds = new Set<string>();
-
-  results.forEach((result) => {
-    console.log(`📊 ${result.accountId}: ${result.images.length} images`);
-    
-    for (const image of result.images) {
-      // 🔥 Use originalId or url as deduplication key
-      const dedupKey = image.originalId || image.url;
-      if (!seenIds.has(dedupKey)) {
-        seenIds.add(dedupKey);
-        combinedImages.push(image);
-      } else {
-        console.log(`⏭️ Skipping duplicate: ${dedupKey}`);
-      }
-    }
-    
-    if (result.nextCursor) {
-      nextCursors[result.accountId] = result.nextCursor;
-    }
+  // 🔥 Sort: Account 1 first, then Account 2, then Account 3
+  const accountOrder = ['account1', 'account2', 'account3'];
+  allImages.sort((a, b) => {
+    const aIndex = accountOrder.indexOf(a.accountId);
+    const bIndex = accountOrder.indexOf(b.accountId);
+    if (aIndex !== bIndex) return aIndex - bIndex;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
-  // 🔥 Sort by createdAt (newest first)
-  combinedImages.sort((a, b) =>
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  console.log(`📦 TOTAL images across all accounts: ${allImages.length}`);
+  console.log(`📊 Account distribution:`, {
+    account1: allImages.filter(img => img.accountId === 'account1').length,
+    account2: allImages.filter(img => img.accountId === 'account2').length,
+    account3: allImages.filter(img => img.accountId === 'account3').length,
+  });
 
-  const hasMore = Object.keys(nextCursors).length > 0;
+  return allImages;
+}
 
-  console.log(`📦 Total unique images: ${combinedImages.length}`);
-  console.log(`📦 Returning: ${Math.min(combinedImages.length, limit)} images`);
+// 🔥 Cache all images in memory
+let cachedImages: any[] | null = null;
+let cacheTimestamp: number | null = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// 🔥 Get ALL images (NO pagination, NO limit)
+export async function fetchAllImages() {
+  // Check cache
+  if (cachedImages && cacheTimestamp && (Date.now() - cacheTimestamp) < CACHE_DURATION) {
+    console.log(`📦 Using cached images: ${cachedImages.length} total`);
+    return {
+      images: cachedImages,
+      total: cachedImages.length,
+    };
+  }
+
+  // Fetch fresh images
+  const allImages = await fetchAllImagesFromAllAccounts();
+  cachedImages = allImages;
+  cacheTimestamp = Date.now();
+
+  console.log(`📦 Returning ALL ${allImages.length} images (no pagination)`);
 
   return {
-    images: combinedImages.slice(0, limit),
-    nextCursor: hasMore ? JSON.stringify(nextCursors) : null,
+    images: allImages,
+    total: allImages.length,
   };
+}
+
+export async function getTotalImageCount() {
+  if (cachedImages) {
+    return cachedImages.length;
+  }
+  
+  const allImages = await fetchAllImagesFromAllAccounts();
+  cachedImages = allImages;
+  cacheTimestamp = Date.now();
+  return allImages.length;
+}
+
+export function clearImageCache() {
+  cachedImages = null;
+  cacheTimestamp = null;
+  console.log('🗑️ Image cache cleared');
 }

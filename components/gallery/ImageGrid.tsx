@@ -10,7 +10,7 @@ import useLocalStorage from "../../hooks/useLocalStorage";
 export function ImageGrid() {
   const [images, setImages] = useState<ImageType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
   const [cursor, setCursor] = useState<string | null>(null);
   const [totalImages, setTotalImages] = useState(0);
   const [interactions, setInteractions] = useLocalStorage(
@@ -18,14 +18,12 @@ export function ImageGrid() {
     {},
   );
   
-  // 🔥 Add refs to prevent multiple triggers
   const isLoadingRef = useRef(false);
-  const hasMoreRef = useRef(true);
+  const hasMoreRef = useRef(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
 
   const loadImages = useCallback(async (reset: boolean = false) => {
-    // 🔥 Prevent multiple simultaneous loads
     if (isLoadingRef.current) return;
     
     try {
@@ -38,7 +36,7 @@ export function ImageGrid() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          limit: 20,
+          // 🔥 Remove limit - fetch ALL images
           cursor: currentCursor,
         }),
       });
@@ -47,7 +45,7 @@ export function ImageGrid() {
       
       if (reset) {
         setImages(data.images);
-        setTotalImages(data.total || 0);
+        setTotalImages(data.total || data.images?.length || 0);
       } else {
         setImages(prev => [...prev, ...data.images]);
       }
@@ -69,15 +67,13 @@ export function ImageGrid() {
     loadImages(true);
   }, []);
 
-  // 🔥 Load more with debounce
   const loadMore = useCallback(async () => {
     if (isLoadingRef.current || !hasMoreRef.current) return;
     await loadImages(false);
   }, [loadImages]);
 
-  // 🔥 Setup Intersection Observer with proper cleanup
+  // Setup Intersection Observer
   useEffect(() => {
-    // Clean up previous observer
     if (observerRef.current) {
       observerRef.current.disconnect();
       observerRef.current = null;
@@ -87,7 +83,6 @@ export function ImageGrid() {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        // 🔥 Only trigger once when loader becomes visible
         if (entries[0].isIntersecting && hasMoreRef.current && !isLoadingRef.current) {
           console.log('📦 Loading more images...');
           loadMore();
@@ -95,7 +90,7 @@ export function ImageGrid() {
       },
       { 
         rootMargin: "200px",
-        threshold: 0.1 // 🔥 Lower threshold for smoother loading
+        threshold: 0.1
       }
     );
 
@@ -159,9 +154,10 @@ export function ImageGrid() {
           <h2 className="mt-6 text-3xl font-bold sm:text-4xl text-white">
             Explore Stunning AI Art
           </h2>
+         
         </motion.div>
 
-        {/* 🔥 MASONRY GRID */}
+        {/* Masonry Grid */}
         <div className="masonry-grid">
           {images.map((image, idx) => (
             <ImageCard
@@ -175,7 +171,7 @@ export function ImageGrid() {
           ))}
         </div>
 
-        {/* 🔥 Loading & End States */}
+        {/* Loading & End States */}
         <div className="flex justify-center py-12">
           {loading && images.length === 0 && (
             <div className="flex flex-col items-center gap-3">
@@ -200,30 +196,10 @@ export function ImageGrid() {
             </div>
           )}
 
-          {/* {!hasMore && !loading && images.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center"
-            >
-              <div className="text-4xl mb-3">✨</div>
-              <p className="text-gray-400">You've reached the end of our gallery</p>
-              <p className="text-sm text-gray-500 mt-1">
-                Total {totalImages} images loaded
-              </p>
-            </motion.div>
-          )} */}
+          
         </div>
 
-        {/* {hasMore && (
-          <div 
-            ref={loaderRef} 
-            className="h-4 w-full flex items-center justify-center"
-            style={{ minHeight: '20px' }}
-          >
-            <span className="text-xs text-gray-600">Loading more...</span>
-          </div>
-        )} */}
+      
       </div>
 
       <style jsx>{`
