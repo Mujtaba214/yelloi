@@ -1,4 +1,5 @@
 export interface ImageType {
+  originalId: string;
   id: string;
   url: string;
   thumbnailUrl?: string;

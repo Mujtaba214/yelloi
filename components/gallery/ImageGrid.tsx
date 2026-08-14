@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ImageCard } from "./ImageCard";
 import { ImageSkeleton } from "./ImageSkeleton";
@@ -17,9 +17,19 @@ export function ImageGrid() {
     "yelloi-interactions",
     {},
   );
+  
+  // 🔥 Add refs to prevent multiple triggers
+  const isLoadingRef = useRef(false);
+  const hasMoreRef = useRef(true);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loaderRef = useRef<HTMLDivElement>(null);
 
   const loadImages = useCallback(async (reset: boolean = false) => {
+    // 🔥 Prevent multiple simultaneous loads
+    if (isLoadingRef.current) return;
+    
     try {
+      isLoadingRef.current = true;
       setLoading(true);
       
       const currentCursor = reset ? undefined : cursor;
@@ -43,41 +53,61 @@ export function ImageGrid() {
       }
       
       setCursor(data.nextCursor);
-      setHasMore(!!data.nextCursor);
+      const hasMoreData = !!data.nextCursor;
+      setHasMore(hasMoreData);
+      hasMoreRef.current = hasMoreData;
     } catch (error) {
       console.error('Error loading images:', error);
     } finally {
       setLoading(false);
+      isLoadingRef.current = false;
     }
   }, [cursor]);
 
+  // Initial load
   useEffect(() => {
     loadImages(true);
   }, []);
 
+  // 🔥 Load more with debounce
   const loadMore = useCallback(async () => {
-    if (!hasMore || loading) return;
+    if (isLoadingRef.current || !hasMoreRef.current) return;
     await loadImages(false);
-  }, [hasMore, loading, loadImages]);
+  }, [loadImages]);
 
+  // 🔥 Setup Intersection Observer with proper cleanup
   useEffect(() => {
-    if (!hasMore || loading) return;
+    // Clean up previous observer
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
+
+    if (!loaderRef.current || !hasMore || loading) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
+        // 🔥 Only trigger once when loader becomes visible
+        if (entries[0].isIntersecting && hasMoreRef.current && !isLoadingRef.current) {
+          console.log('📦 Loading more images...');
           loadMore();
         }
       },
-      { rootMargin: "200px" }
+      { 
+        rootMargin: "200px",
+        threshold: 0.1 // 🔥 Lower threshold for smoother loading
+      }
     );
 
-    const loaderElement = document.getElementById('loader-trigger');
-    if (loaderElement) {
-      observer.observe(loaderElement);
-    }
+    observer.observe(loaderRef.current);
+    observerRef.current = observer;
 
-    return () => observer.disconnect();
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+    };
   }, [hasMore, loading, loadMore]);
 
   const handleLike = (imageId: string, liked: boolean) => {
@@ -111,7 +141,6 @@ export function ImageGrid() {
   return (
     <section className="px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -122,7 +151,7 @@ export function ImageGrid() {
             initial={{ scale: 0 }}
             whileInView={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200 }}
-            className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-yellow-400/20 to-yellow-600/20 px-4 py-2 text-sm font-medium text-yellow-300 backdrop-blur-sm border border-yellow-500/20"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-400/20 to-yellow-600/20 px-4 py-2 text-sm font-medium text-yellow-300 backdrop-blur-sm border border-yellow-500/20"
           >
             🎨 AI Art Gallery
           </motion.div>
@@ -132,8 +161,8 @@ export function ImageGrid() {
           </h2>
         </motion.div>
 
-        {/* Image Grid */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* 🔥 MASONRY GRID */}
+        <div className="masonry-grid">
           {images.map((image, idx) => (
             <ImageCard
               key={`${image.id}-${idx}`}
@@ -141,12 +170,12 @@ export function ImageGrid() {
               index={idx}
               onLike={handleLike}
               onDownload={handleDownload}
-              onViewTracked={handleViewTracked} // 🔥 Pass view tracking handler
+              onViewTracked={handleViewTracked}
             />
           ))}
         </div>
 
-        {/* Loading & End States */}
+        {/* 🔥 Loading & End States */}
         <div className="flex justify-center py-12">
           {loading && images.length === 0 && (
             <div className="flex flex-col items-center gap-3">
@@ -171,7 +200,7 @@ export function ImageGrid() {
             </div>
           )}
 
-          {!hasMore && !loading && images.length > 0 && (
+          {/* {!hasMore && !loading && images.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -183,12 +212,53 @@ export function ImageGrid() {
                 Total {totalImages} images loaded
               </p>
             </motion.div>
-          )}
+          )} */}
         </div>
 
-        {/* 🔥 Invisible trigger for infinite scroll */}
-        <div id="loader-trigger" className="h-1" />
+        {/* {hasMore && (
+          <div 
+            ref={loaderRef} 
+            className="h-4 w-full flex items-center justify-center"
+            style={{ minHeight: '20px' }}
+          >
+            <span className="text-xs text-gray-600">Loading more...</span>
+          </div>
+        )} */}
       </div>
+
+      <style jsx>{`
+        .masonry-grid {
+          column-count: 4;
+          column-gap: 1.5rem;
+        }
+
+        .masonry-grid > div {
+          break-inside: avoid;
+          margin-bottom: 1rem;
+        }
+
+        @media (max-width: 1024px) {
+          .masonry-grid {
+            column-count: 3;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .masonry-grid {
+            column-count: 2;
+            column-gap: 1rem;
+          }
+          .masonry-grid > div {
+            margin-bottom: 0.75rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .masonry-grid {
+            column-count: 1;
+          }
+        }
+      `}</style>
     </section>
   );
 }
