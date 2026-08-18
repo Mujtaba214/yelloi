@@ -19,15 +19,15 @@ export function ImageGrid() {
   const loadImages = useCallback(async (reset: boolean = false) => {
     try {
       setLoading(true);
-      
+
       const response = await fetch('/api/images', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
       });
-      
+
       const data = await response.json();
-      
+
       setImages(data.images || []);
       setTotalImages(data.total || 0);
     } catch (error) {
@@ -90,11 +90,7 @@ export function ImageGrid() {
           <h2 className="mt-6 text-3xl font-bold sm:text-4xl text-white">
             Explore Stunning AI Art
           </h2>
-          {totalImages > 0 && (
-            <p className="mt-4 text-gray-400 max-w-2xl mx-auto">
-              {totalImages} AI-generated images from our collection
-            </p>
-          )}
+
         </motion.div>
 
         {/* 🔥 MASONRY GRID - CSS Columns for dynamic height on all devices */}

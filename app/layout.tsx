@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
+import { Analytics } from "@vercel/analytics/react"; // 🔥 Import Vercel Analytics
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const spaceGrotesk = Space_Grotesk({ 
@@ -38,7 +39,6 @@ export const metadata: Metadata = {
     type: "website",
   },
 
-  
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
@@ -65,6 +65,8 @@ export default function RootLayout({
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
+          {/* 🔥 Vercel Analytics - automatically tracks page views and visitors */}
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>
