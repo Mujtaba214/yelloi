@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
 import { ImageActions } from "./ImageActions";
 import { ImageType } from "@/types";
 import { trackImageView } from "@/lib/analytics/tracking";
@@ -34,9 +33,7 @@ export function ImageCard({
   const [views, setViews] = useState(image.views || 0); 
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // 🔥 Get the original ID for tracking (without account prefix)
-  const originalId = image.originalId || image.id;
-  // 🔥 Use unique ID for React key and component identification
+  // 🔥 Use image.id directly (no account prefix needed for ImgBB)
   const uniqueId = image.id;
 
   useEffect(() => {
@@ -56,7 +53,6 @@ export function ImageCard({
         entries.forEach((entry) => {
           if (entry.isIntersecting && !hasTrackedView) {
             console.log('👁️ Image visible, tracking view:', uniqueId);
-            // 🔥 Track using the unique ID
             trackImageView(uniqueId);
             setHasTrackedView(true);
             setViews(prev => prev + 1);
@@ -89,21 +85,18 @@ export function ImageCard({
     }
   };
 
-  // 🔥 Handle like with unique ID
   const handleLike = (liked: boolean) => {
     if (onLike) {
       onLike(uniqueId, liked);
     }
   };
 
-  // 🔥 Handle dislike with unique ID
   const handleDislike = (disliked: boolean) => {
     if (onDislike) {
       onDislike(uniqueId, disliked);
     }
   };
 
-  // 🔥 Handle download with unique ID
   const handleDownload = () => {
     if (onDownload) {
       onDownload(uniqueId);
@@ -115,7 +108,6 @@ export function ImageCard({
       ref={cardRef}
       initial={{ opacity: 0, scale: 0.9 }}
       whileInView={{ opacity: 1, scale: 1 }}
-      // viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.4, delay: (index % 20) * 0.02 }}
       whileHover={!isMobile ? { y: -4 } : {}}
       onHoverStart={() => !isMobile && setIsHovered(true)}
@@ -129,7 +121,7 @@ export function ImageCard({
     >
       <div className="relative w-full">
         {!imageLoaded && (
-          <div className="absolute inset-0 animate-pulse bg-linear-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600" />
+          <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600" />
         )}
         
         <img
@@ -144,7 +136,6 @@ export function ImageCard({
             display: 'block',
             width: '100%',
             height: 'auto',
-            // objectFit: 'cover',
           }}
         />
 
@@ -169,7 +160,6 @@ export function ImageCard({
             transition={{ duration: 0.2 }}
             className="pointer-events-auto"
           >
-            {/* 🔥 Pass unique ID to ImageActions */}
             <ImageActions
               imageId={uniqueId}
               imageUrl={image.url}
@@ -195,7 +185,7 @@ export function ImageCard({
           )}
         </div>
 
-        {/* Stats Badge */}
+        {/* Stats Badge - Uncommented and using views state */}
         {/* <motion.div
           initial={{ opacity: 0, x: 10 }}
           animate={{ 

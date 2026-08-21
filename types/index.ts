@@ -7,10 +7,7 @@ export interface ImageType {
   downloads: number;
   views: number;
   createdAt: Date;
-  // 🔥 If you want to track which account it came from (optional)
-  accountId?: string;
 }
-
 
 export interface UserInteraction {
   imageId: string;
