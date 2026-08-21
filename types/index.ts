@@ -1,13 +1,14 @@
+// types/index.ts
 export interface ImageType {
-  originalId: string;
   id: string;
   url: string;
-  thumbnailUrl?: string;
-  prompt?: string;
+  prompt: string;
   likes: number;
   downloads: number;
   views: number;
   createdAt: Date;
+  // 🔥 If you want to track which account it came from (optional)
+  accountId?: string;
 }
 
 

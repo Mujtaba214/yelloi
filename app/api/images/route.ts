@@ -1,27 +1,25 @@
 // app/api/images/route.ts
 import { NextResponse } from 'next/server';
-import { fetchAllImages, clearImageCache } from '@/lib/cloudinary/fetch';
+import { fetchImages, fetchAllImages, clearImageCache } from '@/lib/imgbb/fetch';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { refresh = false } = body;
+    const { page = 1, pageSize = 50, refresh = false } = body;
 
-    console.log('📥 POST /api/images called:', { refresh });
-
-    // Clear cache if refresh requested
     if (refresh) {
       clearImageCache();
     }
 
-    const result = await fetchAllImages();
+    // 🔥 Paginated fetch for faster initial load
+    const result = await fetchImages(page, pageSize);
 
     return NextResponse.json({
       images: result.images || [],
       total: result.total || 0,
+      hasMore: result.hasMore || false,
     });
   } catch (error) {
     console.error('❌ Image fetch error:', error);
@@ -29,36 +27,7 @@ export async function POST(request: Request) {
       { 
         images: [],
         total: 0,
-        error: error instanceof Error ? error.message : 'Failed to fetch images'
-      },
-      { status: 500 }
-    );
-  }
-}
-
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const refresh = searchParams.get('refresh') === 'true';
-
-    console.log('📥 GET /api/images called:', { refresh });
-
-    if (refresh) {
-      clearImageCache();
-    }
-
-    const result = await fetchAllImages();
-
-    return NextResponse.json({
-      images: result.images || [],
-      total: result.total || 0,
-    });
-  } catch (error) {
-    console.error('❌ Image fetch error:', error);
-    return NextResponse.json(
-      { 
-        images: [],
-        total: 0,
+        hasMore: false,
         error: error instanceof Error ? error.message : 'Failed to fetch images'
       },
       { status: 500 }
