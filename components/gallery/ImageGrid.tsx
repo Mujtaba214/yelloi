@@ -147,7 +147,7 @@ export function ImageGrid() {
 
       <style jsx>{`
         .masonry-grid {
-          column-count: 2;
+          column-count: 1;
           column-gap: 0.75rem;
         }
         .masonry-grid > div {
