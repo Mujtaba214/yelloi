@@ -2,25 +2,9 @@
 import imagesData from '@/public/imgbb-images.json';
 import { ImageType } from '@/types';
 
-const PAGE_SIZE = 50;
-
-// 🔥 Pre-process images with IDs and placeholders
-export function getOptimizedImage(url: string): { url: string; width: number; height: number } {
-  // ImgBB doesn't provide dimensions, use default aspect ratios
-  return {
-    url: url,
-    width: 800,
-    height: 600,
-  };
-}
-
-// 🔥 Fetch paginated images
-export async function fetchImages(page: number = 1, pageSize: number = PAGE_SIZE): Promise<{
-  images: ImageType[];
-  total: number;
-  hasMore: boolean;
-}> {
-  const allImages = imagesData.images.map((url: string, index: number) => ({
+// 🔥 Fetch ALL images (no pagination, no limit)
+export function fetchAllImagesFromJSON(): ImageType[] {
+  return imagesData.images.map((url: string, index: number) => ({
     id: `img-${String(index + 1).padStart(4, '0')}`,
     url: url,
     prompt: 'AI generated image',
@@ -29,44 +13,36 @@ export async function fetchImages(page: number = 1, pageSize: number = PAGE_SIZE
     views: 0,
     createdAt: new Date(),
   }));
-
-  const start = (page - 1) * pageSize;
-  const end = start + pageSize;
-  const paginated = allImages.slice(start, end);
-
-  return {
-    images: paginated,
-    total: allImages.length,
-    hasMore: end < allImages.length,
-  };
 }
 
-// 🔥 Fetch ALL images (for cache)
+// 🔥 Cache for performance
 let cachedImages: ImageType[] | null = null;
 let cacheTimestamp: number | null = null;
-const CACHE_DURATION = 5 * 60 * 1000;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export async function fetchAllImages(): Promise<{ images: ImageType[]; total: number }> {
+  // Check cache
   if (cachedImages && cacheTimestamp && (Date.now() - cacheTimestamp) < CACHE_DURATION) {
+    console.log(`📦 Using cached images: ${cachedImages.length} total`);
     return { images: cachedImages, total: cachedImages.length };
   }
 
-  const images = imagesData.images.map((url: string, index: number) => ({
-    id: `img-${String(index + 1).padStart(4, '0')}`,
-    url: url,
-    prompt: 'AI generated image',
-    likes: 0,
-    downloads: 0,
-    views: 0,
-    createdAt: new Date(),
-  }));
-
+  // 🔥 Fetch ALL images (no pagination)
+  const images = fetchAllImagesFromJSON();
+  
   cachedImages = images;
   cacheTimestamp = Date.now();
-  return { images, total: images.length };
+
+  console.log(`📦 Fetched ALL ${images.length} images from ImgBB JSON`);
+  
+  return { 
+    images, 
+    total: images.length 
+  };
 }
 
 export function clearImageCache() {
   cachedImages = null;
   cacheTimestamp = null;
+  console.log('🗑️ Image cache cleared');
 }
